@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#003A5C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FieldOps">
+<link rel="manifest" id="manifestLink">
+<title>FieldOps — Rite Solar</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ===== RITE SOLAR BRAND SYSTEM ===== */
+:root {
+  --blue: #00AFEF;
+  --blue-dark: #0090c7;
+  --blue-light: #e0f5ff;
+  --red: #ED3237;
+  --red-light: #fee2e2;
+  --yellow: #FAB520;
+  --yellow-light: #fef9e7;
+  --navy: #003A5C;
+  --navy-light: #00537f;
+  --green: #16a34a;
+  --green-light: #dcfce7;
+  --orange: #f97316;
+  --orange-light: #ffedd5;
+  --bg: #EEF3F7;
+  --white: #FFFFFF;
+  --border: #D0DCE6;
+  --text: #1a2a35;
+  --muted: #5f7a8a;
+  --card-shadow: 0 2px 10px rgba(0,58,92,0.07);
+  --card-shadow-hover: 0 6px 24px rgba(0,58,92,0.13);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Barlow',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+
+/* ===== LOGIN ===== */
+#loginScreen{min-height:100vh;background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}
+#loginScreen::before{content:'';position:absolute;top:-100px;right:-60px;width:350px;height:350px;border-radius:50%;background:radial-gradient(circle,rgba(0,175,239,.12) 0%,transparent 70%)}
+#loginScreen::after{content:'';position:absolute;bottom:-80px;left:-60px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(250,181,32,.08) 0%,transparent 70%)}
+.login-top{text-align:center;margin-bottom:28px;z-index:1;position:relative}
+.logo-lockup{display:inline-flex;align-items:center;gap:10px;margin-bottom:8px}
+.logo-sun{width:48px;height:48px;background:var(--blue);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 4px 16px rgba(0,175,239,.3)}
+.logo-word{font-family:'Barlow Condensed',Arial,sans-serif;font-size:32px;font-weight:800;letter-spacing:-0.5px}
+.logo-rite{color:#fff}
+.logo-solar{color:var(--blue)}
+.logo-dot{display:inline-block;width:9px;height:9px;background:var(--red);border-radius:50%;vertical-align:super;margin-left:1px}
+.login-sub{color:rgba(255,255,255,.5);font-size:13px;letter-spacing:.3px}
+.login-card{background:#fff;border-radius:20px;padding:28px;width:100%;max-width:420px;z-index:1;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.login-card h2{font-family:'Barlow Condensed',Arial,sans-serif;font-size:22px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.login-card p{color:var(--muted);font-size:13px;margin-bottom:22px}
+
+/* ===== FORM ELEMENTS ===== */
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.fg input,.fg select,.fg textarea{width:100%;background:#F4F7FA;border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:12px 14px;font-size:15px;font-family:inherit;transition:border-color .2s;-webkit-appearance:none;appearance:none}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--blue);background:#fff}
+.fg select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235f7a8a' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-color:#F4F7FA;padding-right:36px}
+.fg textarea{resize:vertical;min-height:72px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ===== BUTTONS ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 20px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;transition:all .15s;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--blue);color:#fff;width:100%}
+.btn-primary:hover{background:var(--blue-dark)}
+.btn-secondary{background:#F4F7FA;color:var(--text);border:1.5px solid var(--border)}
+.btn-secondary:hover{border-color:var(--blue);color:var(--blue)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-sm{padding:8px 14px;font-size:13px;border-radius:6px;width:auto}
+.btn-xs{padding:5px 10px;font-size:11px;border-radius:5px;width:auto}
+
+/* ===== DEMO USERS ===== */
+.demo-section{margin-top:20px;padding-top:18px;border-top:1px solid var(--border)}
+.demo-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.demo-user{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;margin-bottom:6px;transition:all .15s;background:#FAFCFE}
+.demo-user:hover,.demo-user:active{border-color:var(--blue);background:var(--blue-light)}
+
+/* ===== APP LAYOUT ===== */
+#appScreen{display:none;min-height:100vh}
+.app-header{background:var(--navy);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 3px 14px rgba(0,58,92,.3)}
+.hdr-logo{display:flex;align-items:center;gap:8px}
+.hdr-sun{width:30px;height:30px;background:var(--blue);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.hdr-word{font-family:'Barlow Condensed',Arial,sans-serif;font-size:20px;font-weight:800}
+.hdr-rite{color:#fff}.hdr-solar{color:var(--blue)}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.sync-btn{background:rgba(0,175,239,.15);border:1px solid rgba(0,175,239,.3);color:var(--blue);border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:700;display:flex;align-items:center;gap:4px;transition:all .15s}
+.sync-btn:hover{background:rgba(0,175,239,.25)}
+.hdr-avatar{width:32px;height:32px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;cursor:pointer;flex-shrink:0}
+.hdr-userinfo{cursor:pointer}
+.hdr-name{color:#fff;font-size:12px;font-weight:700}
+.hdr-role{color:rgba(255,255,255,.5);font-size:10px;text-transform:uppercase;letter-spacing:.3px}
+
+.main-content{padding:14px 14px 76px;max-width:900px;margin:0 auto}
+.page{display:none}
+.page.active{display:block}
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:99;background:var(--navy);border-top:2px solid rgba(0,175,239,.25);display:flex;height:58px;box-shadow:0 -4px 20px rgba(0,58,92,.2)}
+.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:2px;color:rgba(255,255,255,.45);position:relative;padding:4px;transition:color .15s}
+.nav-tab.active{color:var(--blue)}
+.nav-tab.active::before{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:var(--blue);border-radius:0 0 2px 2px}
+.nav-tab-icon{font-size:19px;line-height:1}
+.nav-tab-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+
+/* ===== SECTION HEADER ===== */
+.sec-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:8px}
+.sec-title{font-family:'Barlow Condensed',Arial,sans-serif;font-size:22px;font-weight:800;color:var(--navy);line-height:1}
+.sec-sub{color:var(--muted);font-size:12px;margin-top:3px}
+
+/* ===== STAT CARDS ===== */
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+.stat-card{background:#fff;border-radius:var(--radius);padding:14px;border:2px solid var(--border);cursor:pointer;transition:all .2s;box-shadow:var(--card-shadow);position:relative;overflow:hidden;user-select:none}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.s-total::after{background:var(--blue)}
+.stat-card.s-inprog::after{background:var(--yellow)}
+.stat-card.s-done::after{background:var(--green)}
+.stat-card.s-blocked::after{background:var(--red)}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--card-shadow-hover)}
+.stat-card:active{transform:scale(.97)}
+.stat-card.filtered{border-color:var(--blue);background:var(--blue-light)}
+.stat-icon{font-size:22px;margin-bottom:6px}
+.stat-val{font-family:'Barlow Condensed',Arial,sans-serif;font-size:38px;font-weight:800;line-height:1}
+.s-total .stat-val{color:var(--blue)}.s-inprog .stat-val{color:#c47900}.s-done .stat-val{color:var(--green)}.s-blocked .stat-val{color:var(--red)}
+.stat-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+.stat-hint{font-size:10px;color:var(--blue);font-weight:700;margin-top:5px}
+
+/* ===== NOTIFICATION BANNER ===== */
+.notif-banner{background:var(--yellow-light);border:1.5px solid var(--yellow);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;margin-bottom:14px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.notif-banner:hover{background:#fef3c7}
+
+/* ===== SYNC STATUS ===== */
+.sync-bar{background:var(--blue-light);border:1px solid rgba(0,175,239,.25);border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;color:var(--navy);display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--blue);flex-shrink:0}
+.sync-dot.offline{background:var(--muted)}
+.sync-dot.error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.sync-dot.pulsing{animation:pulse .8s infinite}
+
+/* ===== TASK CARDS ===== */
+.task-card{background:#fff;border-radius:var(--radius);margin-bottom:10px;border:1.5px solid var(--border);box-shadow:var(--card-shadow);overflow:hidden;transition:border-color .15s}
+.task-card:active{transform:scale(.99)}
+.tc-header{padding:12px 12px 10px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:9px}
+.tc-stripe{width:4px;border-radius:4px;flex-shrink:0;align-self:stretch;min-height:40px}
+.stripe-0{background:var(--blue)}.stripe-1{background:var(--yellow)}.stripe-2{background:var(--red)}.stripe-3{background:var(--green)}.stripe-4{background:var(--orange)}.stripe-5{background:#8b5cf6}
+.tc-meta{flex:1;min-width:0}
+.tc-id{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.tc-title{font-size:15px;font-weight:700;color:var(--navy);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tc-desc{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tc-body{padding:9px 12px;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.tc-chip{font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;text-transform:uppercase;letter-spacing:.3px;background:var(--blue-light);color:var(--blue)}
+.tc-meta-item{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
+.tc-meta-item strong{color:var(--text)}
+.tc-footer{padding:9px 12px;background:#FAFCFE;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.overdue-tag{background:var(--red-light);color:var(--red);font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px}
+
+/* ===== STATUS PILLS ===== */
+.spill{display:inline-flex;align-items:center;gap:3px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;flex-shrink:0;white-space:nowrap}
+.spill::before{content:'●';font-size:7px}
+.sp-completed{background:var(--green-light);color:var(--green)}
+.sp-in-progress{background:var(--blue-light);color:var(--blue)}
+.sp-pending{background:#f3f4f6;color:#6b7280}
+.sp-blocked{background:var(--red-light);color:var(--red)}
+
+/* ===== FILTER PILLS ===== */
+.filter-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none}
+.filter-scroll::-webkit-scrollbar{display:none}
+.fpill{flex-shrink:0;padding:7px 13px;border-radius:20px;font-size:13px;font-weight:600;border:1.5px solid var(--border);background:#fff;cursor:pointer;transition:all .15s;color:var(--muted);white-space:nowrap}
+.fpill.active{background:var(--navy);border-color:var(--navy);color:#fff}
+.search-wrap{position:relative;margin-bottom:10px}
+.search-input{width:100%;padding:11px 14px 11px 38px;border-radius:var(--radius-sm);border:1.5px solid var(--border);font-family:inherit;font-size:14px;background:#fff;color:var(--text)}
+.search-input:focus{outline:none;border-color:var(--blue)}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none}
+
+/* ===== MODAL ===== */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,20,40,.6);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:640px;max-height:93vh;overflow-y:auto;animation:slideUp .25s cubic-bezier(.34,1.56,.64,1)}
+@keyframes slideUp{from{transform:translateY(100%);opacity:.5}}
+.drag-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:10px auto 0}
+.modal-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1}
+.modal-title{font-family:'Barlow Condensed',Arial,sans-serif;font-size:21px;font-weight:700;color:var(--navy)}
+.modal-close{background:var(--bg);border:none;color:var(--muted);cursor:pointer;width:30px;height:30px;border-radius:50%;font-size:15px;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:18px}
+.modal-footer{padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:#fff;position:sticky;bottom:0}
+
+/* ===== SUBTASK CHECKLIST ===== */
+.subtask-section-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-left:8px;border-left:3px solid var(--blue)}
+.subtask-card{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;transition:border-color .15s}
+.subtask-card.answered{border-color:var(--blue)}
+.subtask-card.answered-img{border-color:var(--green)}
+.st-label{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:8px}
+.st-required{color:var(--red);font-size:12px;margin-left:4px}
+.st-options{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:0}
+.opt-btn{padding:7px 16px;border-radius:6px;border:1.5px solid var(--border);background:#fff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.opt-btn:active{transform:scale(.96)}
+.opt-btn.sel-yes{background:var(--green-light);border-color:var(--green);color:var(--green)}
+.opt-btn.sel-no{background:var(--red-light);border-color:var(--red);color:var(--red)}
+.opt-btn.sel-na{background:#f3f4f6;border-color:#9ca3af;color:#6b7280}
+.st-text-input{width:100%;margin-top:8px;padding:9px 12px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:14px}
+.st-text-input:focus{outline:none;border-color:var(--blue)}
+.st-img-zone{margin-top:8px;border:2px dashed var(--border);border-radius:8px;padding:16px;text-align:center;cursor:pointer;background:#fafcfe;transition:all .15s}
+.st-img-zone:hover{border-color:var(--blue);background:var(--blue-light)}
+.st-img-preview{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.st-thumb{width:72px;height:72px;object-fit:cover;border-radius:6px;border:1.5px solid var(--border)}
+
+/* ===== PHOTO UPLOAD (global) ===== */
+.photo-zone{border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;background:var(--bg);transition:all .2s}
+.photo-zone:hover{border-color:var(--blue);background:var(--blue-light)}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}
+.photo-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1.5px solid var(--border)}
+.photo-add{aspect-ratio:1;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--muted);cursor:pointer;background:var(--bg)}
+
+/* ===== LOCATION ===== */
+.loc-bar{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;display:flex;align-items:center;gap:10px;font-size:13px}
+.loc-bar.ok{border-color:var(--green);background:var(--green-light)}
+.loc-bar.fail{border-color:var(--red)}
+.loc-text{flex:1;font-size:12px;color:var(--muted)}
+.loc-bar.ok .loc-text{color:var(--green);font-weight:600}
+
+/* ===== USERS ===== */
+.user-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);padding:13px;display:flex;align-items:center;gap:11px;margin-bottom:9px;box-shadow:var(--card-shadow)}
+.u-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
+.uav-admin{background:var(--blue-light);color:var(--blue)}.uav-field{background:var(--yellow-light);color:#92650a}
+
+/* ===== DETAIL VIEW ===== */
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.detail-item{background:var(--bg);border-radius:var(--radius-sm);padding:9px 12px}
+.detail-item.full{grid-column:1/-1}
+.detail-item label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px}
+.detail-item .dval{font-size:13px;font-weight:600;color:var(--text)}
+.st-result{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--bg);border-radius:var(--radius-sm);font-size:13px;border:1px solid var(--border);margin-bottom:6px}
+.av-yes{color:var(--green);font-weight:700}.av-no{color:var(--red);font-weight:700}.av-na{color:var(--muted);font-weight:600}
+
+/* ===== MASTER DATA PAGE ===== */
+.master-table{width:100%;border-collapse:collapse;background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:var(--card-shadow);font-size:13px}
+.master-table th{background:var(--navy);color:#fff;padding:10px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.master-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+.master-table tr:last-child td{border-bottom:none}
+.master-table tr:hover td{background:#FAFCFE}
+.type-header{background:var(--blue-light);font-weight:700;color:var(--navy)}
+
+/* ===== ROLES BADGE ===== */
+.rbadge{font-size:10px;padding:3px 8px;border-radius:4px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.rb-admin{background:var(--blue-light);color:var(--blue)}
+.rb-field{background:var(--yellow-light);color:#92650a}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;bottom:68px;left:50%;transform:translateX(-50%) translateY(40px);z-index:999;background:var(--navy);color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;font-weight:600;white-space:nowrap;opacity:0;transition:all .3s;max-width:92vw;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.toast.ok{border-left:4px solid var(--green)}.toast.err{border-left:4px solid var(--red)}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== EMPTY STATE ===== */
+.empty{text-align:center;padding:50px 20px}
+.empty-icon{font-size:44px;margin-bottom:10px}
+.empty-title{font-family:'Barlow Condensed',Arial,sans-serif;font-size:20px;font-weight:700;color:var(--navy)}
+.empty-sub{color:var(--muted);font-size:13px;margin-top:5px}
+
+/* ===== SETUP PAGE ===== */
+.setup-card{background:#fff;border-radius:var(--radius);padding:18px;margin-bottom:12px;border:1.5px solid var(--border);box-shadow:var(--card-shadow)}
+.setup-card h3{font-family:'Barlow Condensed',Arial,sans-serif;font-size:18px;font-weight:700;color:var(--navy);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.setup-step{display:flex;gap:12px;margin-bottom:10px;align-items:flex-start}
+.step-num{width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:1px}
+.step-body{flex:1}
+.step-title{font-weight:700;font-size:14px;color:var(--navy);margin-bottom:3px}
+.step-desc{font-size:13px;color:var(--muted);line-height:1.5}
+.code-block{background:#1e2a35;color:#7dd3fc;border-radius:var(--radius-sm);padding:12px 14px;font-family:monospace;font-size:12px;margin-top:6px;overflow-x:auto;white-space:pre;line-height:1.6}
+.highlight{background:rgba(250,181,32,.15);border:1px solid var(--yellow);border-radius:4px;padding:2px 6px;font-size:12px;color:#92650a;font-weight:700}
+.info-box{background:var(--blue-light);border-left:4px solid var(--blue);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:12px 14px;font-size:13px;color:var(--navy);margin:10px 0;line-height:1.5}
+.warn-box{background:var(--yellow-light);border-left:4px solid var(--yellow);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:12px 14px;font-size:13px;color:#7a5300;margin:10px 0;line-height:1.5}
+
+/* ===== DESKTOP ===== */
+@media(min-width:768px){
+  .main-content{padding:22px 24px 76px}
+  .stats-grid{grid-template-columns:repeat(4,1fr)}
+  .modal{border-radius:16px;margin:auto;max-height:88vh}
+  .drag-handle{display:none}
+  .detail-grid{grid-template-columns:1fr 1fr 1fr}
+  .modal-overlay{align-items:center}
+}
+@media(min-width:1024px){
+  .main-content{padding:28px 40px 76px}
+}
+</style>
+</head>
+<body>
+
+<!-- ======================== LOGIN ======================== -->
+<div id="loginScreen">
+  <div class="login-top">
+    <div class="logo-lockup">
+      <div class="logo-sun">☀️</div>
+      <div class="logo-word"><span class="logo-rite">rite</span><span class="logo-solar">solar</span><span class="logo-dot"></span></div>
+    </div>
+    <div class="login-sub">Field Operations Management · FieldOps</div>
+  </div>
+  <div class="login-card">
+    <h2>Sign In</h2>
+    <p>Enter your email to access FieldOps</p>
+    <div class="fg"><label>Email</label><input type="email" id="loginEmail" placeholder="you@ritewater.in" inputmode="email" autocomplete="email"></div>
+    <div class="fg"><label>Password</label><input type="password" id="loginPwd" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="btn btn-primary" onclick="login()">Sign In →</button>
+    <div class="demo-section">
+      <div class="demo-label">Demo — tap to fill</div>
+      <div id="demoUsers"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== APP ======================== -->
+<div id="appScreen">
+  <div class="app-header">
+    <div class="hdr-logo">
+      <div class="hdr-sun">☀️</div>
+      <div class="hdr-word"><span class="hdr-rite">rite</span><span class="hdr-solar">solar</span></div>
+    </div>
+    <div class="hdr-right">
+      <button class="sync-btn" id="syncBtn" onclick="doSync()"><span id="syncIcon">⟳</span> Sync</button>
+      <div style="display:flex;align-items:center;gap:7px;cursor:pointer" onclick="logout()">
+        <div class="hdr-avatar" id="hdrAvatar"></div>
+        <div class="hdr-userinfo">
+          <div class="hdr-name" id="hdrName"></div>
+          <div class="hdr-role" id="hdrRole"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="sec-header">
+        <div><div class="sec-title">Dashboard</div><div class="sec-sub" id="dashGreeting"></div></div>
+      </div>
+      <div id="syncBarEl"></div>
+      <div id="notifBanner"></div>
+      <div class="stats-grid" id="statsGrid"></div>
+      <div id="dashFilterLabel" style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-left:8px;border-left:3px solid var(--blue)">Recent Tasks</div>
+      <div id="dashTaskList"></div>
+    </div>
+
+    <!-- TASKS -->
+    <div class="page" id="page-tasks">
+      <div class="sec-header">
+        <div><div class="sec-title">Tasks</div><div class="sec-sub" id="tasksSub"></div></div>
+        <button class="btn btn-primary btn-sm admin-only" onclick="openCreateTask()" style="display:none">+ New</button>
+      </div>
+      <div class="search-wrap"><span class="search-icon">🔍</span><input type="text" class="search-input" id="searchInp" placeholder="Search tasks…" oninput="renderTasks()"></div>
+      <div class="filter-scroll" id="filterPills"></div>
+      <div id="taskList"></div>
+    </div>
+
+    <!-- TEAM -->
+    <div class="page" id="page-users">
+      <div class="sec-header">
+        <div><div class="sec-title">Team</div><div class="sec-sub">Manage field & admin accounts</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openAddUser()">+ Add</button>
+      </div>
+      <div id="userList"></div>
+    </div>
+
+    <!-- MASTER DATA (admin only) -->
+    <div class="page" id="page-master">
+      <div class="sec-header">
+        <div><div class="sec-title">Task Master</div><div class="sec-sub">Loaded from Google Sheets → TaskMaster tab</div></div>
+        <button class="btn btn-secondary btn-sm" onclick="loadMasterFromSheets()">↻ Reload</button>
+      </div>
+      <div id="masterContent"></div>
+      <div class="info-box" style="margin-top:14px">
+        <strong>📊 How to configure:</strong> Edit the <strong>TaskMaster</strong> sheet in Google Sheets. Each row defines one subtask with columns: <em>TaskType | SubtaskID | Label | CollectionType | IsRequired | ImageRequired | Options</em>. Tap Reload to pull updates into the app without any code change.
+      </div>
+    </div>
+
+    <!-- SETUP GUIDE -->
+    <div class="page" id="page-setup">
+      <div class="sec-header"><div><div class="sec-title">Setup Guide</div><div class="sec-sub">Complete configuration walkthrough</div></div></div>
+      <div id="setupContent"></div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-tab active" id="tab-dashboard" onclick="showPage('dashboard')"><div class="nav-tab-icon">📊</div><div class="nav-tab-label">Home</div></div>
+    <div class="nav-tab" id="tab-tasks" onclick="showPage('tasks')"><div class="nav-tab-icon">📋</div><div class="nav-tab-label">Tasks</div></div>
+    <div class="nav-tab admin-only" id="tab-users" onclick="showPage('users')" style="display:none"><div class="nav-tab-icon">👥</div><div class="nav-tab-label">Team</div></div>
+    <div class="nav-tab admin-only" id="tab-master" onclick="showPage('master')" style="display:none"><div class="nav-tab-icon">⚙️</div><div class="nav-tab-label">Master</div></div>
+    <div class="nav-tab admin-only" id="tab-setup" onclick="showPage('setup')" style="display:none"><div class="nav-tab-icon">📖</div><div class="nav-tab-label">Setup</div></div>
+  </div>
+</div>
+
+<!-- ======================== MODALS ======================== -->
+
+<!-- CREATE TASK -->
+<div class="modal-overlay" id="mCreateTask">
+  <div class="modal">
+    <div class="drag-handle"></div>
+    <div class="modal-hdr"><div class="modal-title">Create Task</div><button class="modal-close" onclick="closeModal('mCreateTask')">✕</button></div>
+    <div class="modal-body">
+      <div class="fg"><label>Title</label><input type="text" id="ct_title" placeholder="Task title"></div>
+      <div class="fg"><label>Description</label><textarea id="ct_desc" placeholder="Optional details…" rows="2"></textarea></div>
+      <div class="fg">
+        <label>Task Type</label>
+        <select id="ct_type" onchange="onTypeChange()"><option value="">— Select Type —</option></select>
+      </div>
+      <div id="ct_subtask_preview"></div>
+      <div class="fg"><label>Assign To</label><select id="ct_assignee"><option value="">— Select Field Member —</option></select></div>
+      <div class="two-col">
+        <div class="fg"><label>Start Date</label><input type="date" id="ct_start"></div>
+        <div class="fg"><label>Due Date</label><input type="date" id="ct_due"></div>
+      </div>
+      <div class="fg"><label>SS / Site Code</label><input type="text" id="ct_ss" placeholder="Site code (optional)"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('mCreateTask')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="createTask()">Create Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPDATE TASK (field) -->
+<div class="modal-overlay" id="mUpdateTask">
+  <div class="modal">
+    <div class="drag-handle"></div>
+    <div class="modal-hdr"><div class="modal-title" id="utTitle">Update</div><button class="modal-close" onclick="closeModal('mUpdateTask')">✕</button></div>
+    <div class="modal-body">
+      <div id="utSubtasks"></div>
+      <div class="fg" style="margin-top:14px">
+        <label>Status</label>
+        <select id="ut_status" onchange="onStatusChange()">
+          <option value="In-progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Blocked">Blocked</option>
+        </select>
+      </div>
+      <div id="blockedWrap" style="display:none"><div class="fg"><label>Blocked Reason <span style="color:var(--red)">*</span></label><input type="text" id="ut_blocked" placeholder="What is blocking this?"></div></div>
+      <div class="fg">
+        <label>Completion Photo <span style="color:var(--red)">*</span></label>
+        <div class="photo-zone" id="mainPhotoZone" onclick="document.getElementById('mainPhotoInput').click()">
+          <div style="font-size:30px;margin-bottom:6px">📷</div>
+          <div style="font-size:14px;font-weight:700;color:var(--navy)">Tap to upload proof photo</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">Opens camera on mobile</div>
+          <input type="file" id="mainPhotoInput" accept="image/*" multiple capture="environment" onchange="handleMainPhotos(this)" style="display:none">
+        </div>
+        <div class="photo-grid" id="mainPhotoGrid" style="display:none;margin-top:8px"></div>
+      </div>
+      <div class="fg">
+        <label>📍 Your Location</label>
+        <div class="loc-bar" id="locBar"><span style="font-size:18px">📍</span><span class="loc-text" id="locText">Fetching location…</span></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('mUpdateTask')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="submitUpdate()">Submit ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- TASK DETAIL -->
+<div class="modal-overlay" id="mDetail">
+  <div class="modal">
+    <div class="drag-handle"></div>
+    <div class="modal-hdr"><div class="modal-title" id="detailTitle">Task Detail</div><button class="modal-close" onclick="closeModal('mDetail')">✕</button></div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<!-- USER MODAL -->
+<div class="modal-overlay" id="mUser">
+  <div class="modal">
+    <div class="drag-handle"></div>
+    <div class="modal-hdr"><div class="modal-title" id="userModalTitle">Add Member</div><button class="modal-close" onclick="closeModal('mUser')">✕</button></div>
+    <div class="modal-body">
+      <div class="fg"><label>Full Name</label><input type="text" id="um_name" placeholder="Full name"></div>
+      <div class="fg"><label>Email</label><input type="email" id="um_email" placeholder="email@ritewater.in" inputmode="email"></div>
+      <div class="fg"><label>FCM Token (push notifications)</label><input type="text" id="um_fcm" placeholder="Optional — from device setup"></div>
+      <div class="fg"><label>Role</label><select id="um_role"><option value="Field">Field Team</option><option value="Admin">Admin</option></select></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('mUser')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveUser()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================================================================
+   ╔═══════════════════════════════════════════════════════════════╗
+   ║            FIELDOPS v3 — RITE SOLAR                          ║
+   ║  Configurable Task/Subtask Master · Push Notifications       ║
+   ║  Google Sheets Backend · Mobile PWA                          ║
+   ╚═══════════════════════════════════════════════════════════════╝
+================================================================ */
+
+// ─── CONFIGURATION ─────────────────────────────────────────────
+const CONFIG = {
+  // Step 1: Paste your Google Apps Script Web App URL here
+  sheetsUrl: 'https://script.google.com/macros/s/AKfycbx0_L5-sahj4IsptvXrvTVI688FgGImxsKwgbAxA6QQ1w-thUmePSwpMbN5rhmAinc/exec',
+
+  // Step 2: Set to true once URL is pasted
+  sheetsEnabled: true,
+
+  // Step 3: Firebase Cloud Messaging - for push notifications
+  // Get from Firebase Console → Project Settings → Cloud Messaging
+  fcmServerKey: '',       // Your FCM Server Key (Legacy) or use Firebase Admin SDK
+  fcmEnabled: false,
+
+  // App version
+  version: '3.0.0'
+};
+
+// ─── MASTER TASK/SUBTASK DATA ───────────────────────────────────
+// This is loaded from Google Sheets "TaskMaster" tab at runtime.
+// Fallback default data is shown below — edit via Sheets, not code.
+//
+// Google Sheets TaskMaster Column Structure:
+// A: TaskType   B: TypeLabel   C: SubtaskID   D: SubtaskLabel
+// E: CollectionType  F: IsRequired  G: ImageRequired  H: Options
+//
+// CollectionType values: yesno | text | number | select | image_only
+// IsRequired: TRUE/FALSE   ImageRequired: TRUE/FALSE
+// Options: pipe-separated for 'select' type e.g. "Good|Fair|Poor"
+
+let TASK_MASTER = {
+  'Config': {
+    label: 'New Configuration',
+    colorIdx: 0,
+    subtasks: [
+      { id: 'installation',  label: 'Installation Complete',     type: 'yesno',  required: true,  imageRequired: true,  options: [] },
+      { id: 'rtu',           label: 'RTU Configured',            type: 'yesno',  required: true,  imageRequired: true,  options: [] },
+      { id: 'modem',         label: 'Modem Configured',          type: 'yesno',  required: true,  imageRequired: false, options: [] },
+      { id: 'sld',           label: 'SLD Diagram Verified',      type: 'yesno',  required: true,  imageRequired: true,  options: [] },
+      { id: 'analog',        label: 'Analog Inputs Connected',   type: 'yesno',  required: true,  imageRequired: true,  options: [] },
+      { id: 'issue',         label: 'Issues Identified?',        type: 'yesno',  required: true,  imageRequired: false, options: [] },
+      { id: 'issue_detail',  label: 'Issue Details (if any)',    type: 'text',   required: false, imageRequired: false, options: [] },
+      { id: 'signoff',       label: 'Site Signoff Done',         type: 'yesno',  required: true,  imageRequired: true,  options: [] },
+      { id: 'sim',           label: 'SIM Card Installed',        type: 'yesno',  required: true,  imageRequired: true,  options: [] },
+      { id: 'ss_code',       label: 'SS Code',                   type: 'number', required: true,  imageRequired: false, options: [] }
+    ]
+  },
+  'Solar': {
+    label: 'Solar Feeder Addition',
+    colorIdx: 1,
+    subtasks: [
+      { id: 'panels',        label: 'Panels Installed',          type: 'yesno',  required: true,  imageRequired: true,  options: [] },
+      { id: 'inverter',      label: 'Inverter Connected',        type: 'yesno',  required: true,  imageRequired: true,  options: [] },
+      { id: 'metering',      label: 'Metering Setup Verified',   type: 'yesno',  required: true,  imageRequired: false, options: [] },
+      { id: 'load_test',     label: 'Load Test Performed',       type: 'yesno',  required: true,  imageRequired: false, options: [] },
+      { id: 'panel_cond',    label: 'Panel Condition',           type: 'select', required: true,  imageRequired: false, options: ['Good','Fair','Damaged'] },
+      { id: 'solar_issue',   label: 'Any Issues?',               type: 'yesno',  required: true,  imageRequired: false, options: [] }
+    ]
+  },
+  'Rectification': {
+    label: 'EA Rectification',
+    colorIdx: 2,
+    subtasks: [
+      { id: 'fault_type',    label: 'Fault Type',                type: 'select', required: true,  imageRequired: false, options: ['Electrical','Mechanical','Software','Other'] },
+      { id: 'diagnosis',     label: 'Fault Diagnosed',           type: 'yesno',  required: true,  imageRequired: false, options: [] },
+      { id: 'parts',         label: 'Replacement Parts Fitted',  type: 'yesno',  required: false, imageRequired: false, options: [] },
+      { id: 'parts_detail',  label: 'Parts Used',                type: 'text',   required: false, imageRequired: false, options: [] },
+      { id: 'post_test',     label: 'System Tested Post Fix',    type: 'yesno',  required: true,  imageRequired: false, options: [] },
+      { id: 'meter_reading', label: 'Meter Reading',             type: 'number', required: true,  imageRequired: false, options: [] },
+      { id: 'rect_issue',    label: 'Residual Issues?',          type: 'yesno',  required: true,  imageRequired: false, options: [] }
+    ]
+  },
+  'Maintenance': {
+    label: 'Routine Maintenance',
+    colorIdx: 3,
+    subtasks: [
+      { id: 'visual',        label: 'Visual Inspection Done',    type: 'yesno',  required: true,  imageRequired: false, options: [] },
+      { id: 'cleaning',      label: 'Equipment Cleaned',         type: 'yesno',  required: false, imageRequired: false, options: [] },
+      { id: 'readings',      label: 'Readings Logged',           type: 'yesno',  required: true,  imageRequired: false, options: [] },
+      { id: 'reading_val',   label: 'Reading Value',             type: 'number', required: true,  imageRequired: false, options: [] },
+      { id: 'calibration',   label: 'Calibration Checked',       type: 'yesno',  required: false, imageRequired: false, options: [] },
+      { id: 'maint_issue',   label: 'Issues Found?',             type: 'yesno',  required: true,  imageRequired: false, options: [] }
+    ]
+  }
+};
+
+// ─── APP STATE ──────────────────────────────────────────────────
+let users = [
+  { email: 'admin@ritewater.in',  name: 'Admin User',  role: 'Admin', fcmToken: '' },
+  { email: 'vinay@ritewater.in',  name: 'Vinay',       role: 'Admin', fcmToken: '' },
+  { email: 'saurabhl@ritewater.in', name: 'Saurabh',  role: 'Admin', fcmToken: '' },
+  { email: 'field1@ritewater.in', name: 'Ravi Kumar',  role: 'Field', fcmToken: '' },
+  { email: 'field2@ritewater.in', name: 'Suresh M.',   role: 'Field', fcmToken: '' },
+  { email: 'substationmonitoring@ritewater.in', name: 'Substation', role: 'Field', fcmToken: '' },
+  { email: 'def@xyz.com',         name: 'Deepak F.',   role: 'Field', fcmToken: '' }
+];
+
+let tasks = [
+  { id:'a95425aa', taskNum:'SS:5', title:'New Configuration', type:'Config', description:'Configure new site', assignedTo:'substationmonitoring@ritewater.in', startDate:'2026-02-17', dueDate:'2026-02-17', status:'Completed', ssCode:'34037', subtaskAnswers:{ installation:{val:'Yes',img:[]}, rtu:{val:'Yes',img:[]}, modem:{val:'Yes',img:[]}, sld:{val:'Yes',img:[]}, analog:{val:'Yes',img:[]}, issue:{val:'No',img:[]}, signoff:{val:'Yes',img:[]}, sim:{val:'Yes',img:[]} }, subtaskImages:{}, mainPhotos:[], location:'21.116852, 79.056952', createdBy:'saurabhl@ritewater.in', createdAt:'2026-02-17T18:00:09Z', submittedBy:'substationmonitoring@ritewater.in', submittedAt:'2026-02-17T18:02:39Z', blockedReason:null },
+  { id:'07c61bbd', taskNum:'SS:6', title:'Solar Feeder Addition', type:'Solar', description:'New solar feeder at site', assignedTo:'substationmonitoring@ritewater.in', startDate:'2026-02-17', dueDate:'2026-02-17', status:'Completed', ssCode:'344022', subtaskAnswers:{}, subtaskImages:{}, mainPhotos:[], location:'21.116853, 79.056956', createdBy:'saurabhl@ritewater.in', createdAt:'2026-02-17T18:07:21Z', submittedBy:'substationmonitoring@ritewater.in', submittedAt:'2026-02-17T18:08:03Z', blockedReason:null },
+  { id:'8038a176', taskNum:'SS:7', title:'EA Rectification', type:'Rectification', description:'Loss beyond limit', assignedTo:'field1@ritewater.in', startDate:'2026-02-17', dueDate:'2026-02-17', status:'Completed', ssCode:'124012', subtaskAnswers:{}, subtaskImages:{}, mainPhotos:[], location:'21.116848, 79.056987', createdBy:'saurabhl@ritewater.in', createdAt:'2026-02-17T18:18:11Z', submittedBy:'field1@ritewater.in', submittedAt:'2026-02-17T18:19:04Z', blockedReason:null },
+  { id:'dac0703b', taskNum:'SS:8', title:'Routine Maintenance', type:'Maintenance', description:'Monthly site maintenance', assignedTo:'field2@ritewater.in', startDate:'2026-02-17', dueDate:'2026-02-28', status:'In-progress', ssCode:'12346', subtaskAnswers:{}, subtaskImages:{}, mainPhotos:[], location:null, createdBy:'vinay@ritewater.in', createdAt:'2026-02-17T22:14:29Z', submittedBy:null, submittedAt:null, blockedReason:null },
+  { id:'bf3901cd', taskNum:'SS:9', title:'Config Setup', type:'Config', description:'New substation config', assignedTo:'def@xyz.com', startDate:'2026-02-20', dueDate:'2026-02-20', status:'Blocked', ssCode:'55001', subtaskAnswers:{}, subtaskImages:{}, mainPhotos:[], location:null, createdBy:'vinay@ritewater.in', createdAt:'2026-02-20T10:00:00Z', submittedBy:'def@xyz.com', submittedAt:'2026-02-20T11:30:00Z', blockedReason:'Access key not available, gate locked' }
+];
+
+let nextNum = 10;
+let currentUser = null;
+let currentTaskId = null;
+let capturedLocation = null;
+let mainPhotoData = [];
+let subtaskPhotoData = {}; // { subtaskId: [dataURL, ...] }
+let tempSubtaskAnswers = {}; // { subtaskId: { val, text } }
+let editingUserEmail = null;
+let dashFilter = null;
+let lastSynced = null;
+
+// ─── AUTH ───────────────────────────────────────────────────────
+function populateDemoUsers() {
+  const ct = document.getElementById('demoUsers');
+  users.forEach(u => {
+    const d = document.createElement('div');
+    d.className = 'demo-user';
+    d.innerHTML = `<span class="rbadge ${u.role==='Admin'?'rb-admin':'rb-field'}">${u.role}</span>
+      <div><strong>${u.name}</strong> <span style="color:var(--muted);font-size:12px">${u.email}</span></div>`;
+    d.onclick = () => { document.getElementById('loginEmail').value = u.email; document.getElementById('loginPwd').value = 'demo'; };
+    ct.appendChild(d);
+  });
+}
+
+function login() {
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const user = users.find(u => u.email.toLowerCase() === email);
+  if (!user) { showToast('User not found. Tap a demo account.', 'err'); return; }
+  currentUser = user;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'block';
+  initApp();
+  // Register for push notifications if field team
+  if (user.role === 'Field') requestPushPermission();
+}
+
+function logout() {
+  if (!confirm('Sign out?')) return;
+  currentUser = null; dashFilter = null;
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPwd').value = '';
+}
+
+// ─── INIT ───────────────────────────────────────────────────────
+function initApp() {
+  document.getElementById('hdrAvatar').textContent = currentUser.name[0].toUpperCase();
+  document.getElementById('hdrName').textContent = currentUser.name;
+  document.getElementById('hdrRole').textContent = currentUser.role + ' · Rite Solar';
+  document.getElementById('tasksSub').textContent = currentUser.role === 'Admin' ? 'All team tasks' : 'Your assigned tasks';
+
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = currentUser.role === 'Admin' ? '' : 'none');
+
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('ct_start').value = today;
+  document.getElementById('ct_due').value = today;
+
+  const hr = new Date().getHours();
+  document.getElementById('dashGreeting').textContent = `${hr<12?'Good morning':hr<17?'Good afternoon':'Good evening'}, ${currentUser.name}`;
+
+  populateTypeDropdown();
+  populateAssigneeDropdown();
+  buildFilterPills();
+  renderSyncBar();
+  renderNotifBanner();
+  showPage('dashboard');
+
+  if (CONFIG.sheetsEnabled) { loadMasterFromSheets(); syncFromSheets(); }
+}
+
+function populateTypeDropdown() {
+  const sel = document.getElementById('ct_type');
+  sel.innerHTML = '<option value="">— Select Type —</option>';
+  Object.entries(TASK_MASTER).forEach(([k,v]) => sel.innerHTML += `<option value="${k}">${v.label}</option>`);
+}
+
+function populateAssigneeDropdown() {
+  const sel = document.getElementById('ct_assignee');
+  sel.innerHTML = '<option value="">— Select Field Member —</option>';
+  users.filter(u => u.role === 'Field').forEach(u => sel.innerHTML += `<option value="${u.email}">${u.name}</option>`);
+}
+
+function buildFilterPills() {
+  const statuses = ['All','Pending','In-progress','Completed','Blocked'];
+  const types = Object.keys(TASK_MASTER);
+  const all = [...statuses, ...types];
+  document.getElementById('filterPills').innerHTML = all.map((p,i) =>
+    `<div class="fpill ${i===0?'active':''}" data-f="${p}" onclick="setFilter('${p}',this)">${p==='All'?'All Tasks': TASK_MASTER[p]?.label||p}</div>`
+  ).join('');
+}
+
+// ─── NAVIGATION ─────────────────────────────────────────────────
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+page)?.classList.add('active');
+  document.getElementById('tab-'+page)?.classList.add('active');
+  if (page==='dashboard') renderDashboard();
+  if (page==='tasks') renderTasks();
+  if (page==='users') renderUsers();
+  if (page==='master') renderMaster();
+  if (page==='setup') renderSetup();
+}
+
+// ─── DASHBOARD ──────────────────────────────────────────────────
+function getMyTasks() {
+  return currentUser.role === 'Admin' ? tasks : tasks.filter(t => t.assignedTo === currentUser.email);
+}
+
+function renderDashboard() {
+  const all = getMyTasks();
+  const stats = [
+    { cls:'s-total',   key:null,          icon:'📋', val:all.length,                               lbl:'All Tasks' },
+    { cls:'s-inprog',  key:'In-progress', icon:'⚡', val:all.filter(t=>t.status==='In-progress').length, lbl:'In Progress' },
+    { cls:'s-done',    key:'Completed',   icon:'✅', val:all.filter(t=>t.status==='Completed').length,   lbl:'Completed' },
+    { cls:'s-blocked', key:'Blocked',     icon:'🚫', val:all.filter(t=>t.status==='Blocked').length,     lbl:'Blocked' }
+  ];
+  document.getElementById('statsGrid').innerHTML = stats.map(s => `
+    <div class="stat-card ${s.cls} ${dashFilter===s.key?'filtered':''}" onclick="toggleDashFilter(${JSON.stringify(s.key)})">
+      <div class="stat-icon">${s.icon}</div>
+      <div class="stat-val">${s.val}</div>
+      <div class="stat-lbl">${s.lbl}</div>
+      <div class="stat-hint">↓ Tap to filter</div>
+    </div>`).join('');
+
+  let shown = dashFilter ? all.filter(t=>t.status===dashFilter) : all;
+  shown = shown.slice().sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,10);
+  document.getElementById('dashFilterLabel').textContent = dashFilter ? `${dashFilter} Tasks (${shown.length})` : `Recent Tasks (${shown.length})`;
+  document.getElementById('dashTaskList').innerHTML = shown.length === 0
+    ? `<div class="empty"><div class="empty-icon">🎉</div><div class="empty-title">No tasks here</div><div class="empty-sub">Nothing matches this filter</div></div>`
+    : shown.map(t => taskCard(t)).join('');
+}
+
+function toggleDashFilter(key) {
+  dashFilter = (dashFilter === key) ? null : key;
+  renderDashboard();
+}
+
+// ─── TASKS ──────────────────────────────────────────────────────
+function setFilter(f, el) {
+  document.querySelectorAll('.fpill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active'); renderTasks();
+}
+
+function renderTasks() {
+  const f = document.querySelector('.fpill.active')?.dataset.f || 'All';
+  const s = document.getElementById('searchInp').value.toLowerCase();
+  let list = getMyTasks().filter(t => {
+    const mf = f==='All' || t.status===f || t.type===f;
+    const ms = !s || t.title.toLowerCase().includes(s) || t.taskNum.toLowerCase().includes(s) || (t.description||'').toLowerCase().includes(s);
+    return mf && ms;
+  }).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  document.getElementById('taskList').innerHTML = list.length===0
+    ? `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No tasks found</div><div class="empty-sub">Try a different filter</div></div>`
+    : list.map(t=>taskCard(t)).join('');
+}
+
+function taskCard(t) {
+  const assignee = users.find(u=>u.email===t.assignedTo);
+  const typeInfo = TASK_MASTER[t.type] || {label:t.type, colorIdx:0};
+  const isOverdue = new Date(t.dueDate)<new Date() && t.status!=='Completed';
+  const canUpdate = currentUser.role==='Field' && t.assignedTo===currentUser.email && t.status!=='Completed';
+  const canView = currentUser.role==='Admin';
+  return `<div class="task-card">
+    <div class="tc-header">
+      <div class="tc-stripe stripe-${typeInfo.colorIdx}"></div>
+      <div class="tc-meta">
+        <div class="tc-id">${t.taskNum}${t.ssCode?` · ${t.ssCode}`:''}</div>
+        <div class="tc-title">${t.title}</div>
+        ${t.description?`<div class="tc-desc">${t.description}</div>`:''}
+      </div>
+      <span class="spill sp-${sClass(t.status)}">${t.status}</span>
+    </div>
+    <div class="tc-body">
+      <span class="tc-chip">${typeInfo.label}</span>
+      <span class="tc-meta-item">👤 <strong>${assignee?assignee.name:t.assignedTo.split('@')[0]}</strong></span>
+      <span class="tc-meta-item">📅 <strong>${t.dueDate}</strong></span>
+      ${t.location?`<span class="tc-meta-item">📍 GPS</span>`:''}
+    </div>
+    <div class="tc-footer">
+      ${isOverdue?`<span class="overdue-tag">⚠ OVERDUE</span>`:'<span></span>'}
+      <div style="display:flex;gap:7px">
+        ${canUpdate?`<button class="btn btn-primary btn-sm" onclick="openUpdateTask('${t.id}')">Update</button>`:''}
+        ${canView?`<button class="btn btn-secondary btn-sm" onclick="openDetail('${t.id}')">View</button>`:''}
+        ${!canUpdate&&!canView&&t.status==='Completed'?`<span style="color:var(--green);font-size:13px;font-weight:700">✓ Done</span>`:''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function sClass(s) {
+  return {'Completed':'completed','In-progress':'in-progress','Pending':'pending','Blocked':'blocked'}[s]||'pending';
+}
+
+// ─── CREATE TASK ────────────────────────────────────────────────
+function openCreateTask() {
+  document.getElementById('ct_title').value=''; document.getElementById('ct_desc').value='';
+  document.getElementById('ct_type').value=''; document.getElementById('ct_ss').value='';
+  document.getElementById('ct_subtask_preview').innerHTML='';
+  document.getElementById('mCreateTask').classList.add('open');
+}
+
+function onTypeChange() {
+  const type = document.getElementById('ct_type').value;
+  const ct = document.getElementById('ct_subtask_preview');
+  if (!type || !TASK_MASTER[type]) { ct.innerHTML=''; return; }
+  const subtasks = TASK_MASTER[type].subtasks;
+  ct.innerHTML = `<div style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Field team will execute these subtasks:</div>
+    ${subtasks.map(s=>{
+      const typeLabel = {yesno:'Yes/No',text:'Text input',number:'Number',select:'Select',image_only:'Photo only'}[s.type]||s.type;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <span>${s.label}${s.required?'<span style="color:var(--red)"> *</span>':''}</span>
+        <span style="display:flex;gap:4px">
+          <span style="background:var(--blue-light);color:var(--blue);font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px">${typeLabel}</span>
+          ${s.imageRequired?'<span style="background:var(--yellow-light);color:#92650a;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px">📷 Photo</span>':''}
+        </span>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function createTask() {
+  const title = document.getElementById('ct_title').value.trim();
+  const type = document.getElementById('ct_type').value;
+  const assignedTo = document.getElementById('ct_assignee').value;
+  const startDate = document.getElementById('ct_start').value;
+  const dueDate = document.getElementById('ct_due').value;
+  if (!title) { showToast('Enter a task title','err'); return; }
+  if (!type) { showToast('Select a task type','err'); return; }
+  if (!assignedTo) { showToast('Assign to a team member','err'); return; }
+  if (!startDate||!dueDate) { showToast('Set start & due dates','err'); return; }
+
+  const id = (Date.now().toString(36)+Math.random().toString(36).substr(2,4));
+  const taskNum = `SS:${nextNum++}`;
+  const task = { id, taskNum, title, type, description:document.getElementById('ct_desc').value.trim(), assignedTo, startDate, dueDate, status:'Pending', ssCode:document.getElementById('ct_ss').value.trim()||null, subtaskAnswers:{}, subtaskImages:{}, mainPhotos:[], location:null, createdBy:currentUser.email, createdAt:new Date().toISOString(), submittedBy:null, submittedAt:null, blockedReason:null };
+  tasks.unshift(task);
+
+  sheetsPost('CREATE_TASK', {task});
+  sheetsLog(currentUser.email, 'CREATE_TASK', `${taskNum}: ${title} → ${assignedTo}`);
+  sendPushNotification(assignedTo, `📋 New Task: ${title}`, `You have been assigned ${taskNum}. Due: ${dueDate}`, task.id);
+
+  closeModal('mCreateTask');
+  renderDashboard();
+  showToast(`${taskNum} created & notification sent ✓`,'ok');
+}
+
+// ─── UPDATE TASK (field) ────────────────────────────────────────
+function openUpdateTask(taskId) {
+  const task = tasks.find(t=>t.id===taskId);
+  if (!task) return;
+  currentTaskId = taskId;
+  mainPhotoData = [];
+  subtaskPhotoData = {};
+  tempSubtaskAnswers = {};
+  document.getElementById('mainPhotoGrid').style.display='none';
+  document.getElementById('mainPhotoGrid').innerHTML='';
+  document.getElementById('mainPhotoZone').style.display='block';
+  document.getElementById('ut_status').value = task.status!=='Pending'?task.status:'In-progress';
+  document.getElementById('blockedWrap').style.display='none';
+  document.getElementById('ut_blocked').value = task.blockedReason||'';
+  document.getElementById('utTitle').textContent = task.taskNum+' — '+task.title;
+
+  // Build dynamic subtask checklist from TASK_MASTER
+  const typeInfo = TASK_MASTER[task.type];
+  const ct = document.getElementById('utSubtasks');
+  if (typeInfo) {
+    ct.innerHTML = `<div class="subtask-section-title" style="margin-bottom:10px">${typeInfo.label}</div>
+    ${typeInfo.subtasks.map(s => buildSubtaskWidget(s, task)).join('')}`;
+  } else { ct.innerHTML=''; }
+
+  // Location
+  capturedLocation = task.location || null;
+  const lb = document.getElementById('locBar');
+  const lt = document.getElementById('locText');
+  if (capturedLocation) { lb.className='loc-bar ok'; lt.textContent=capturedLocation; }
+  else {
+    lb.className='loc-bar'; lt.textContent='Fetching location…';
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos=>{
+        capturedLocation=`${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+        lb.className='loc-bar ok'; lt.textContent=capturedLocation;
+      }, ()=>{ lt.textContent='Location unavailable — check permissions'; lb.className='loc-bar fail'; }, {enableHighAccuracy:true,timeout:10000});
+    }
+  }
+  document.getElementById('mUpdateTask').classList.add('open');
+}
+
+function buildSubtaskWidget(s, task) {
+  const saved = task.subtaskAnswers[s.id] || {};
+  const savedVal = saved.val || '';
+  const isAnswered = !!savedVal;
+
+  let inputHtml = '';
+  if (s.type === 'yesno') {
+    inputHtml = `<div class="st-options">
+      <button class="opt-btn ${savedVal==='Yes'?'sel-yes':''}" onclick="setSubAns('${s.id}','Yes',this,'yesno')">✓ Yes</button>
+      <button class="opt-btn ${savedVal==='No'?'sel-no':''}" onclick="setSubAns('${s.id}','No',this,'yesno')">✗ No</button>
+      <button class="opt-btn ${savedVal==='NA'?'sel-na':''}" onclick="setSubAns('${s.id}','NA',this,'yesno')">N/A</button>
+    </div>`;
+  } else if (s.type === 'select') {
+    inputHtml = `<div class="st-options">${s.options.map(o=>`<button class="opt-btn ${savedVal===o?'sel-yes':''}" onclick="setSubAns('${s.id}','${o}',this,'select')">${o}</button>`).join('')}</div>`;
+  } else if (s.type === 'text') {
+    inputHtml = `<input type="text" class="st-text-input" id="sttxt_${s.id}" value="${savedVal||''}" placeholder="Enter ${s.label.toLowerCase()}…" oninput="setSubAns('${s.id}',this.value,null,'text')">`;
+  } else if (s.type === 'number') {
+    inputHtml = `<input type="number" class="st-text-input" id="sttxt_${s.id}" value="${savedVal||''}" placeholder="Enter number…" inputmode="numeric" oninput="setSubAns('${s.id}',this.value,null,'number')">`;
+  } else if (s.type === 'image_only') {
+    inputHtml = '';
+  }
+
+  const imgSection = s.imageRequired ? `
+    <div class="st-img-zone" style="margin-top:8px" onclick="document.getElementById('stphoto_${s.id}').click()">
+      <span style="font-size:16px">📷</span> <span style="font-size:12px;font-weight:700;color:var(--navy)">Required photo for this subtask</span>
+      <input type="file" id="stphoto_${s.id}" accept="image/*" capture="environment" multiple onchange="handleSubtaskPhoto('${s.id}',this)" style="display:none">
+    </div>
+    <div class="st-img-preview" id="stprev_${s.id}"></div>` : '';
+
+  return `<div class="subtask-card ${isAnswered?'answered':''}" id="stcard_${s.id}">
+    <div class="st-label">${s.label}${s.required?`<span class="st-required">*</span>`:''}</div>
+    ${inputHtml}
+    ${imgSection}
+  </div>`;
+}
+
+function setSubAns(id, val, btn, type) {
+  tempSubtaskAnswers[id] = { val, type };
+  const card = document.getElementById('stcard_'+id);
+  if (card) card.classList.add('answered');
+
+  if (btn && (type==='yesno'||type==='select')) {
+    const allBtns = btn.closest('.st-options').querySelectorAll('.opt-btn');
+    allBtns.forEach(b => b.className='opt-btn');
+    if (val==='Yes') btn.className='opt-btn sel-yes';
+    else if (val==='No') btn.className='opt-btn sel-no';
+    else if (val==='NA') btn.className='opt-btn sel-na';
+    else btn.className='opt-btn sel-yes';
+  }
+}
+
+function handleSubtaskPhoto(subtaskId, input) {
+  if (!subtaskPhotoData[subtaskId]) subtaskPhotoData[subtaskId] = [];
+  const prev = document.getElementById('stprev_'+subtaskId);
+  const card = document.getElementById('stcard_'+subtaskId);
+  Array.from(input.files).forEach(f => {
+    const r = new FileReader();
+    r.onload = e => {
+      subtaskPhotoData[subtaskId].push(e.target.result);
+      const img = document.createElement('img'); img.src=e.target.result; img.className='st-thumb';
+      prev.appendChild(img);
+      if(card) card.classList.add('answered-img');
+    };
+    r.readAsDataURL(f);
+  });
+}
+
+function handleMainPhotos(input) {
+  if (!input.files.length) return;
+  document.getElementById('mainPhotoZone').style.display='none';
+  document.getElementById('mainPhotoGrid').style.display='grid';
+  const grid = document.getElementById('mainPhotoGrid');
+  Array.from(input.files).forEach(f=>{
+    const r=new FileReader(); r.onload=e=>{ mainPhotoData.push(e.target.result); const img=document.createElement('img'); img.src=e.target.result; img.className='photo-thumb'; grid.appendChild(img); }; r.readAsDataURL(f);
+  });
+  const add=document.createElement('div'); add.className='photo-add'; add.innerHTML='+'; add.onclick=()=>document.getElementById('mainPhotoInput').click(); grid.appendChild(add);
+}
+
+function onStatusChange() {
+  document.getElementById('blockedWrap').style.display = document.getElementById('ut_status').value==='Blocked'?'':'none';
+}
+
+function submitUpdate() {
+  const task = tasks.find(t=>t.id===currentTaskId);
+  if (!task) return;
+  const status = document.getElementById('ut_status').value;
+
+  // Validate required subtasks
+  const typeInfo = TASK_MASTER[task.type];
+  if (typeInfo && status==='Completed') {
+    const missing = typeInfo.subtasks.filter(s => {
+      if (!s.required) return false;
+      const ans = tempSubtaskAnswers[s.id] || task.subtaskAnswers[s.id];
+      if (!ans || !ans.val) return true;
+      if (s.imageRequired && !subtaskPhotoData[s.id]?.length && !task.subtaskImages?.[s.id]?.length) return true;
+      return false;
+    });
+    if (missing.length) { showToast(`Please complete: ${missing[0].label}`,'err'); return; }
+  }
+  if (status==='Completed' && mainPhotoData.length===0 && task.mainPhotos.length===0) { showToast('Please upload a completion photo','err'); return; }
+  if (status==='Blocked' && !document.getElementById('ut_blocked').value.trim()) { showToast('Describe what is blocking this','err'); return; }
+
+  // Merge answers
+  if (typeInfo) {
+    typeInfo.subtasks.forEach(s => {
+      if (tempSubtaskAnswers[s.id]) {
+        task.subtaskAnswers[s.id] = tempSubtaskAnswers[s.id];
+      }
+      // Also collect text inputs
+      const txtEl = document.getElementById('sttxt_'+s.id);
+      if (txtEl && txtEl.value) task.subtaskAnswers[s.id] = { val:txtEl.value, type:s.type };
+      if (subtaskPhotoData[s.id]) {
+        if (!task.subtaskImages) task.subtaskImages={};
+        task.subtaskImages[s.id] = subtaskPhotoData[s.id];
+      }
+    });
+  }
+
+  task.status=status;
+  if (mainPhotoData.length) task.mainPhotos=mainPhotoData;
+  task.location=capturedLocation;
+  task.submittedBy=currentUser.email;
+  task.submittedAt=new Date().toISOString();
+  if (status==='Blocked') task.blockedReason=document.getElementById('ut_blocked').value;
+
+  sheetsPost('UPDATE_TASK',{task});
+  sheetsLog(currentUser.email,'UPDATE_TASK',`${task.taskNum} → ${status}${capturedLocation?` @ ${capturedLocation}`:''}`);
+
+  // Notify admin of status change
+  const admins = users.filter(u=>u.role==='Admin');
+  admins.forEach(a => sendPushNotification(a.email, `📋 Task ${task.taskNum} updated`, `${currentUser.name} marked it ${status}`, task.id));
+
+  closeModal('mUpdateTask');
+  renderDashboard(); renderTasks();
+  showToast(`${task.taskNum} updated to ${status} ✓`,'ok');
+}
+
+// ─── TASK DETAIL (admin) ────────────────────────────────────────
+function openDetail(taskId) {
+  const task = tasks.find(t=>t.id===taskId);
+  if (!task) return;
+  const assignee = users.find(u=>u.email===task.assignedTo);
+  const creator = users.find(u=>u.email===task.createdBy);
+  const typeInfo = TASK_MASTER[task.type]||{label:task.type,subtasks:[]};
+  document.getElementById('detailTitle').textContent = task.taskNum;
+
+  const subtaskHtml = typeInfo.subtasks.length && Object.keys(task.subtaskAnswers).length ? `
+    <div class="subtask-section-title" style="margin:14px 0 8px">Subtask Report</div>
+    ${typeInfo.subtasks.map(s=>{
+      const ans = task.subtaskAnswers[s.id];
+      if(!ans) return '';
+      const valColor = ans.val==='Yes'?'av-yes':ans.val==='No'?'av-no':'av-na';
+      const imgs = task.subtaskImages?.[s.id]||[];
+      return `<div class="st-result">
+        <span>${s.label}</span>
+        <span class="${valColor}">${ans.val}</span>
+      </div>
+      ${imgs.length?`<div style="display:flex;gap:6px;margin:-2px 0 6px;flex-wrap:wrap">${imgs.map(img=>`<img src="${img}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">`).join('')}</div>`:''}`;
+    }).join('')}` : '';
+
+  const photosHtml = task.mainPhotos?.length ? `
+    <div class="subtask-section-title" style="margin:14px 0 8px">Completion Photos</div>
+    <div class="photo-grid">${task.mainPhotos.map(p=>`<img src="${p}" class="photo-thumb">`).join('')}</div>` : '';
+
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-item"><label>Task ID</label><div class="dval" style="color:var(--blue)">${task.taskNum}</div></div>
+      <div class="detail-item"><label>Status</label><div class="dval"><span class="spill sp-${sClass(task.status)}">${task.status}</span></div></div>
+      <div class="detail-item"><label>Type</label><div class="dval">${typeInfo.label}</div></div>
+      <div class="detail-item"><label>SS Code</label><div class="dval">${task.ssCode||'—'}</div></div>
+      <div class="detail-item"><label>Assigned To</label><div class="dval">${assignee?.name||task.assignedTo}</div></div>
+      <div class="detail-item"><label>Created By</label><div class="dval">${creator?.name||task.createdBy}</div></div>
+      <div class="detail-item"><label>Start</label><div class="dval">${task.startDate}</div></div>
+      <div class="detail-item"><label>Due</label><div class="dval">${task.dueDate}</div></div>
+      ${task.description?`<div class="detail-item full"><label>Description</label><div class="dval">${task.description}</div></div>`:''}
+      ${task.blockedReason?`<div class="detail-item full" style="border:1.5px solid var(--red)"><label>Blocked Reason</label><div class="dval" style="color:var(--red)">${task.blockedReason}</div></div>`:''}
+    </div>
+    ${task.location?`<div class="loc-bar ok" style="margin-bottom:12px"><span>📍</span><span class="loc-text">${task.location}</span><a href="https://maps.google.com/?q=${encodeURIComponent(task.location)}" target="_blank" style="color:var(--blue);font-size:12px;font-weight:700;margin-left:auto;text-decoration:none">Maps →</a></div>`:''}
+    ${subtaskHtml}${photosHtml}
+    ${task.submittedAt?`<div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center">Submitted by ${users.find(u=>u.email===task.submittedBy)?.name||task.submittedBy} · ${new Date(task.submittedAt).toLocaleString()}</div>`:''}
+  `;
+  document.getElementById('mDetail').classList.add('open');
+}
+
+// ─── USERS ──────────────────────────────────────────────────────
+function renderUsers() {
+  document.getElementById('userList').innerHTML = users.map(u=>`
+    <div class="user-card">
+      <div class="u-av ${u.role==='Admin'?'uav-admin':'uav-field'}">${u.name[0].toUpperCase()}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:14px">${u.name}</div>
+        <div style="font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${u.email}</div>
+        ${u.fcmToken?`<div style="font-size:10px;color:var(--green);margin-top:2px">🔔 Push enabled</div>`:'<div style="font-size:10px;color:var(--muted);margin-top:2px">🔕 No push token</div>'}
+      </div>
+      <span class="rbadge ${u.role==='Admin'?'rb-admin':'rb-field'}">${u.role}</span>
+      <button class="btn btn-secondary btn-xs" onclick="editUser('${u.email}')">Edit</button>
+      ${u.email!==currentUser.email?`<button class="btn btn-danger btn-xs" onclick="deleteUser('${u.email}')">✕</button>`:''}
+    </div>`).join('');
+}
+
+function openAddUser() {
+  editingUserEmail=null; document.getElementById('userModalTitle').textContent='Add Member';
+  ['um_name','um_email','um_fcm'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('um_role').value='Field';
+  document.getElementById('mUser').classList.add('open');
+}
+
+function editUser(email) {
+  const u=users.find(u=>u.email===email); if(!u) return;
+  editingUserEmail=email; document.getElementById('userModalTitle').textContent='Edit Member';
+  document.getElementById('um_name').value=u.name;
+  document.getElementById('um_email').value=u.email;
+  document.getElementById('um_role').value=u.role;
+  document.getElementById('um_fcm').value=u.fcmToken||'';
+  document.getElementById('mUser').classList.add('open');
+}
+
+function saveUser() {
+  const name=document.getElementById('um_name').value.trim();
+  const email=document.getElementById('um_email').value.trim().toLowerCase();
+  const role=document.getElementById('um_role').value;
+  const fcmToken=document.getElementById('um_fcm').value.trim();
+  if (!name||!email) { showToast('Fill all fields','err'); return; }
+  if (editingUserEmail) {
+    const u=users.find(u=>u.email===editingUserEmail);
+    if(u){u.name=name;u.email=email;u.role=role;u.fcmToken=fcmToken;}
+  } else {
+    if(users.find(u=>u.email===email)){showToast('Email already exists','err');return;}
+    users.push({email,name,role,fcmToken});
+    sheetsPost('ADD_USER',{user:{email,name,role,fcmToken}});
+  }
+  closeModal('mUser'); renderUsers(); populateAssigneeDropdown();
+  showToast(editingUserEmail?'Member updated ✓':'Member added ✓','ok');
+}
+
+function deleteUser(email) {
+  if(!confirm('Remove this team member?')) return;
+  users=users.filter(u=>u.email!==email);
+  renderUsers(); populateAssigneeDropdown(); showToast('Member removed','ok');
+}
+
+// ─── MASTER DATA PAGE ───────────────────────────────────────────
+function renderMaster() {
+  const ct = document.getElementById('masterContent');
+  let html = '';
+  Object.entries(TASK_MASTER).forEach(([typeKey, typeInfo]) => {
+    html += `<div style="margin-bottom:16px">
+      <div style="font-family:'Barlow Condensed',Arial,sans-serif;font-size:16px;font-weight:700;color:var(--navy);margin-bottom:6px;display:flex;align-items:center;gap:8px">
+        <div style="width:12px;height:12px;border-radius:50%;background:var(--blue)"></div> ${typeInfo.label} <span style="font-size:12px;color:var(--muted);font-family:inherit">(${typeKey})</span>
+      </div>
+      <div style="overflow-x:auto;border-radius:var(--radius);box-shadow:var(--card-shadow)">
+      <table class="master-table">
+        <thead><tr><th>Subtask ID</th><th>Label</th><th>Collection Type</th><th>Required</th><th>Image Required</th><th>Options</th></tr></thead>
+        <tbody>
+        ${typeInfo.subtasks.map(s=>`<tr>
+          <td><code style="font-size:11px;color:var(--blue)">${s.id}</code></td>
+          <td>${s.label}</td>
+          <td><span style="background:var(--blue-light);color:var(--blue);font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px">${s.type}</span></td>
+          <td>${s.required?'<span style="color:var(--green);font-weight:700">✓ Yes</span>':'<span style="color:var(--muted)">No</span>'}</td>
+          <td>${s.imageRequired?'<span style="color:var(--yellow);font-weight:700">📷 Yes</span>':'<span style="color:var(--muted)">No</span>'}</td>
+          <td>${s.options?.length?s.options.join(', '):'—'}</td>
+        </tr>`).join('')}
+        </tbody>
+      </table></div>
+    </div>`;
+  });
+  ct.innerHTML = html || '<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">No master data</div><div class="empty-sub">Load from Google Sheets</div></div>';
+}
+
+async function loadMasterFromSheets() {
+  if (!CONFIG.sheetsEnabled) { showToast('Connect Google Sheets first (Setup tab)','err'); renderMaster(); return; }
+  showToast('Loading master data…');
+  try {
+    const res = await fetch(CONFIG.sheetsUrl+'?action=GET_MASTER');
+    const data = await res.json();
+    if (data.taskMaster) {
+      TASK_MASTER = data.taskMaster;
+      buildFilterPills(); populateTypeDropdown();
+      renderMaster();
+      showToast('Master data refreshed ✓','ok');
+    }
+  } catch(e) { showToast('Could not load from Sheets','err'); renderMaster(); }
+}
+
+// ─── PUSH NOTIFICATIONS ─────────────────────────────────────────
+// Uses Firebase Cloud Messaging (FCM). Field team must grant
+// notification permission when they first open the app.
+
+async function requestPushPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') return;
+  if (Notification.permission === 'denied') return;
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    // In production: get FCM token from Firebase SDK and save to user record
+    // For demo, we show a simulated token
+    const fakeToken = 'fcm_demo_'+currentUser.email.replace(/[^a-z0-9]/g,'_')+'_'+Date.now();
+    currentUser.fcmToken = fakeToken;
+    const u = users.find(x=>x.email===currentUser.email);
+    if(u) u.fcmToken=fakeToken;
+    sheetsPost('UPDATE_USER_FCM',{email:currentUser.email,fcmToken:fakeToken});
+    showToast('🔔 Push notifications enabled!','ok');
+  }
+}
+
+function sendPushNotification(recipientEmail, title, body, taskId) {
+  const recipient = users.find(u=>u.email===recipientEmail);
+  if (!recipient?.fcmToken) {
+    // Show in-app notification instead
+    console.log(`[Push - demo] To: ${recipientEmail} | ${title} | ${body}`);
+    // Show simulated notification if user is currently logged in as recipient
+    if (currentUser.email === recipientEmail && Notification.permission==='granted') {
+      new Notification(title, { body, icon: '/icon-192.png', tag: taskId });
+    }
+    return;
+  }
+  if (!CONFIG.fcmEnabled) return;
+  // In production: call your Apps Script proxy or Cloud Function
+  // which calls FCM API with the token. Never expose FCM server key in frontend.
+  sheetsPost('SEND_PUSH',{
+    to: recipient.fcmToken,
+    notification: { title, body },
+    data: { taskId, type:'task_update' }
+  });
+}
+
+function renderNotifBanner() {
+  const ct = document.getElementById('notifBanner');
+  if (currentUser.role !== 'Field') { ct.innerHTML=''; return; }
+  if (Notification.permission === 'granted') { ct.innerHTML=''; return; }
+  ct.innerHTML = `<div class="notif-banner" onclick="requestPushPermission()">
+    🔔 <strong>Enable notifications</strong> to get alerted when tasks are assigned to you → Tap here
+  </div>`;
+}
+
+// ─── GOOGLE SHEETS INTEGRATION ──────────────────────────────────
+async function sheetsPost(action, payload={}) {
+  if (!CONFIG.sheetsEnabled || !CONFIG.sheetsUrl) return;
+  try {
+    await fetch(CONFIG.sheetsUrl, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action,...payload}) });
+  } catch(e) { console.warn('Sheets post failed:',e); }
+}
+
+async function sheetsLog(user, action, detail) {
+  sheetsPost('LOG',{log:{timestamp:new Date().toISOString(),user,action,detail}});
+}
+
+async function syncFromSheets() {
+  if (!CONFIG.sheetsEnabled || !CONFIG.sheetsUrl) return;
+  try {
+    const res = await fetch(CONFIG.sheetsUrl+'?action=GET_ALL');
+    const data = await res.json();
+    if (data.tasks?.length>1) { /* merge logic */ }
+    if (data.users?.length>1) { /* merge users */ }
+    lastSynced = new Date().toLocaleTimeString();
+    renderSyncBar();
+  } catch(e) {}
+}
+
+async function doSync() {
+  if (!CONFIG.sheetsEnabled) { showPage('setup'); showToast('Follow setup guide to connect Sheets','err'); return; }
+  const btn=document.getElementById('syncBtn'); btn.style.opacity='.6';
+  for(const t of tasks) await sheetsPost('UPDATE_TASK',{task:t});
+  lastSynced=new Date().toLocaleTimeString();
+  btn.style.opacity='';
+  renderSyncBar(); showToast('Synced to Google Sheets ✓','ok');
+}
+
+function renderSyncBar() {
+  const ct=document.getElementById('syncBarEl');
+  ct.innerHTML = CONFIG.sheetsEnabled
+    ? `<div class="sync-bar"><div class="sync-dot ${lastSynced?'':'pulsing'}"></div><span>${lastSynced?`Last synced: ${lastSynced}`:'Connecting to Google Sheets…'}</span></div>`
+    : `<div class="sync-bar"><div class="sync-dot offline"></div><span><strong>Google Sheets not connected.</strong> Go to <strong>Setup tab</strong> for instructions. <a href="#" onclick="showPage('setup');return false" style="color:var(--blue)">Setup →</a></span></div>`;
+}
+
+// ─── SETUP GUIDE ────────────────────────────────────────────────
+function renderSetup() {
+  document.getElementById('setupContent').innerHTML = `
+
+  <div class="setup-card">
+    <h3>📊 Part 1 — Google Sheets Backend</h3>
+    <div class="info-box">Your Google Sheet will have 5 tabs: <strong>Tasks · Users · TaskMaster · Log · Config</strong></div>
+
+    <div class="setup-step"><div class="step-num">1</div><div class="step-body">
+      <div class="step-title">Create the Google Sheet</div>
+      <div class="step-desc">Go to <a href="https://sheets.new" target="_blank" style="color:var(--blue)">sheets.new</a> and create a new sheet. Name it <strong>"FieldOps — Rite Solar"</strong>. Create 5 tabs: Tasks, Users, TaskMaster, Log, Config.</div>
+    </div></div>
+
+    <div class="setup-step"><div class="step-num">2</div><div class="step-body">
+      <div class="step-title">Set up TaskMaster tab (key for configurable subtasks)</div>
+      <div class="step-desc">Row 1 must be headers. Add this header row exactly:</div>
+      <div class="code-block">TaskType | TypeLabel | SubtaskID | SubtaskLabel | CollectionType | IsRequired | ImageRequired | Options</div>
+      <div class="step-desc" style="margin-top:6px">CollectionType values: <span class="highlight">yesno</span> <span class="highlight">text</span> <span class="highlight">number</span> <span class="highlight">select</span> <span class="highlight">image_only</span><br>Options (for select type): pipe-separated e.g. <code>Good|Fair|Poor</code><br>IsRequired & ImageRequired: <code>TRUE</code> or <code>FALSE</code></div>
+      <div class="step-desc" style="margin-top:6px">Example rows:</div>
+      <div class="code-block">Config | New Configuration | installation | Installation Complete | yesno | TRUE | TRUE |
+Config | New Configuration | rtu          | RTU Configured       | yesno | TRUE | TRUE |
+Solar  | Solar Feeder     | panel_cond   | Panel Condition      | select| TRUE | FALSE| Good|Fair|Damaged</div>
+    </div></div>
+
+    <div class="setup-step"><div class="step-num">3</div><div class="step-body">
+      <div class="step-title">Add the Apps Script</div>
+      <div class="step-desc">In your Sheet go to <strong>Extensions → Apps Script</strong>. Delete existing code and paste:</div>
+      <div class="code-block">const SS = SpreadsheetApp.getActiveSpreadsheet();
+
+function doPost(e) {
+  const d = JSON.parse(e.postData.contents);
+  const action = d.action;
+
+  if (action === 'CREATE_TASK') {
+    const sh = SS.getSheetByName('Tasks');
+    const t = d.task;
+    sh.appendRow([t.id,t.taskNum,t.title,t.type,t.description,
+      t.assignedTo,t.startDate,t.dueDate,t.status,t.ssCode||'',
+      t.createdBy,t.createdAt,'','','','','']);
+  }
+
+  if (action === 'UPDATE_TASK') {
+    const sh = SS.getSheetByName('Tasks');
+    const rows = sh.getDataRange().getValues();
+    for (let i=1;i&lt;rows.length;i++) {
+      if (rows[i][0]===d.task.id) {
+        const r = i+1;
+        sh.getRange(r,9).setValue(d.task.status);
+        sh.getRange(r,13).setValue(d.task.location||'');
+        sh.getRange(r,14).setValue(d.task.submittedBy||'');
+        sh.getRange(r,15).setValue(d.task.submittedAt||'');
+        sh.getRange(r,16).setValue(JSON.stringify(d.task.subtaskAnswers||{}));
+        sh.getRange(r,17).setValue(d.task.blockedReason||'');
+        break;
+      }
+    }
+  }
+
+  if (action === 'ADD_USER') {
+    const sh = SS.getSheetByName('Users');
+    const u = d.user;
+    sh.appendRow([u.email,u.name,u.role,u.fcmToken||'',new Date().toISOString()]);
+  }
+
+  if (action === 'UPDATE_USER_FCM') {
+    const sh = SS.getSheetByName('Users');
+    const rows = sh.getDataRange().getValues();
+    for (let i=1;i&lt;rows.length;i++) {
+      if (rows[i][0]===d.email) { sh.getRange(i+1,4).setValue(d.fcmToken); break; }
+    }
+  }
+
+  if (action === 'LOG') {
+    const sh = SS.getSheetByName('Log');
+    const l = d.log;
+    sh.appendRow([l.timestamp,l.user,l.action,l.detail]);
+  }
+
+  if (action === 'SEND_PUSH') {
+    // Call FCM via UrlFetchApp
+    const payload = { to: d.to, notification: d.notification, data: d.data };
+    UrlFetchApp.fetch('https://fcm.googleapis.com/fcm/send', {
+      method:'post', contentType:'application/json',
+      headers:{ Authorization:'key=YOUR_FCM_SERVER_KEY_HERE' },
+      payload:JSON.stringify(payload), muteHttpExceptions:true
+    });
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({ok:true}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet(e) {
+  const action = e.parameter.action || 'GET_ALL';
+
+  if (action === 'GET_ALL') {
+    const tasks = SS.getSheetByName('Tasks').getDataRange().getValues();
+    const users = SS.getSheetByName('Users').getDataRange().getValues();
+    return ContentService.createTextOutput(JSON.stringify({tasks,users}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (action === 'GET_MASTER') {
+    const rows = SS.getSheetByName('TaskMaster').getDataRange().getValues();
+    const master = {};
+    let colorIdx = 0;
+    for (let i=1;i&lt;rows.length;i++) {
+      const [type,typeLabel,id,label,colType,req,imgReq,options] = rows[i];
+      if (!type) continue;
+      if (!master[type]) { master[type]={label:typeLabel,colorIdx:colorIdx++,subtasks:[]}; }
+      master[type].subtasks.push({
+        id, label, type:colType,
+        required: req===true||String(req).toUpperCase()==='TRUE',
+        imageRequired: imgReq===true||String(imgReq).toUpperCase()==='TRUE',
+        options: options?String(options).split('|').map(o=>o.trim()).filter(Boolean):[]
+      });
+    }
+    return ContentService.createTextOutput(JSON.stringify({taskMaster:master}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}</div>
+    </div></div>
+
+    <div class="setup-step"><div class="step-num">4</div><div class="step-body">
+      <div class="step-title">Deploy as Web App</div>
+      <div class="step-desc">Click <strong>Deploy → New deployment</strong><br>• Type: <strong>Web App</strong><br>• Execute as: <strong>Me</strong><br>• Who has access: <strong>Anyone</strong><br>Click Deploy. Copy the Web App URL.</div>
+    </div></div>
+
+    <div class="setup-step"><div class="step-num">5</div><div class="step-body">
+      <div class="step-title">Paste URL into app config</div>
+      <div class="step-desc">Open this HTML file in a text editor. Find the CONFIG block at the top of the script and update:</div>
+      <div class="code-block">sheetsUrl: 'https://script.google.com/macros/s/YOUR_ID/exec',
+sheetsEnabled: true,</div>
+    </div></div>
+  </div>
+
+  <div class="setup-card">
+    <h3>🔔 Part 2 — Push Notifications (Firebase FCM)</h3>
+    <div class="warn-box">Push notifications require a free Firebase project. This enables field team to receive task alerts on their phone even when the app is not open.</div>
+
+    <div class="setup-step"><div class="step-num">1</div><div class="step-body">
+      <div class="step-title">Create a Firebase project</div>
+      <div class="step-desc">Go to <a href="https://console.firebase.google.com" target="_blank" style="color:var(--blue)">console.firebase.google.com</a> → Add project → name it "FieldOps-RiteSolar". No need to enable Analytics.</div>
+    </div></div>
+
+    <div class="setup-step"><div class="step-num">2</div><div class="step-body">
+      <div class="step-title">Get your Server Key</div>
+      <div class="step-desc">Project Settings → Cloud Messaging → Server Key (Legacy). Copy it.</div>
+    </div></div>
+
+    <div class="setup-step"><div class="step-num">3</div><div class="step-body">
+      <div class="step-title">Paste key into Apps Script</div>
+      <div class="step-desc">In the Apps Script SEND_PUSH function, replace <code>YOUR_FCM_SERVER_KEY_HERE</code> with your actual key. This keeps the key server-side and secure.</div>
+    </div></div>
+
+    <div class="setup-step"><div class="step-num">4</div><div class="step-body">
+      <div class="step-title">How it works</div>
+      <div class="step-desc">When field staff first open the app on their phone and log in, they are prompted to allow notifications. The browser generates a unique FCM token for that device. The token is saved to the Users sheet. When admin assigns a task, the app calls your Apps Script which calls FCM to deliver the push notification to that device — even if the browser is closed.</div>
+    </div></div>
+  </div>
+
+  <div class="setup-card">
+    <h3>📱 Part 3 — Installing on Mobile (Field Team)</h3>
+    <div class="info-box">This app is a <strong>Progressive Web App (PWA)</strong>. Field team can install it on their phone homescreen — it looks and works like a native app, with offline capability. Free, no App Store needed.</div>
+
+    <div class="setup-step"><div class="step-num">1</div><div class="step-body">
+      <div class="step-title">Host the HTML file (Free options)</div>
+      <div class="step-desc"><strong>Option A — GitHub Pages (Recommended):</strong><br>1. Create free account at github.com<br>2. New repository → upload fieldops-v3.html as index.html<br>3. Settings → Pages → Source: main branch<br>4. Your app is live at <code>https://yourname.github.io/fieldops</code><br><br><strong>Option B — Netlify Drop:</strong><br>1. Go to <a href="https://netlify.com/drop" target="_blank" style="color:var(--blue)">netlify.com/drop</a><br>2. Drag & drop the HTML file<br>3. Get a free URL instantly<br><br><strong>Option C — Google Drive:</strong><br>Upload to Drive → Share → anyone with link → open link directly in Chrome mobile.</div>
+    </div></div>
+
+    <div class="setup-step"><div class="step-num">2</div><div class="step-body">
+      <div class="step-title">Install on Android (field team)</div>
+      <div class="step-desc">1. Open the app URL in <strong>Chrome</strong><br>2. Tap the <strong>⋮ menu</strong> (3 dots, top right)<br>3. Tap <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong><br>4. Tap Add — the app icon appears on the home screen<br>5. Open from home screen — works like a native app in full screen<br><br>🟡 <strong>Share this URL with field staff via WhatsApp</strong> — they just tap the link and install.</div>
+    </div></div>
+
+    <div class="setup-step"><div class="step-num">3</div><div class="step-body">
+      <div class="step-title">Install on iPhone (field team)</div>
+      <div class="step-desc">1. Open the app URL in <strong>Safari</strong> (must be Safari, not Chrome)<br>2. Tap the <strong>Share button</strong> (box with arrow, bottom bar)<br>3. Scroll down → tap <strong>"Add to Home Screen"</strong><br>4. Tap Add — app appears on home screen<br><br>⚠️ Push notifications on iOS require iOS 16.4+ and Safari. Works well on most modern iPhones.</div>
+    </div></div>
+
+    <div class="setup-step"><div class="step-num">4</div><div class="step-body">
+      <div class="step-title">Admin on Laptop</div>
+      <div class="step-desc">Admin simply opens the URL in any browser (Chrome, Edge, Firefox). No installation needed. All admin features (create tasks, view all, manage team, configure master data) are fully accessible on desktop. The layout automatically adjusts for larger screens.</div>
+    </div></div>
+
+    <div class="setup-step"><div class="step-num">5</div><div class="step-body">
+      <div class="step-title">WhatsApp message to send to field team</div>
+      <div class="step-desc">Copy and send this message:</div>
+      <div class="code-block">Hi Team! 👷
+
+Please install our new Field Operations app on your phone:
+
+🔗 [PASTE YOUR APP URL HERE]
+
+Steps:
+1. Open the link in Chrome
+2. Tap ⋮ menu → "Add to Home screen"
+3. Login with your work email
+
+You'll get notifications on your phone when tasks are assigned to you.
+
+— Rite Solar Operations Team</div>
+    </div></div>
+  </div>
+
+  <div class="setup-card">
+    <h3>⚙️ Part 4 — Configuring Tasks & Subtasks</h3>
+    <div class="info-box">The <strong>TaskMaster</strong> sheet controls everything. Add new task types, change subtask labels, add/remove fields — all without touching code.</div>
+    <div class="step-desc" style="margin-bottom:10px">To add a brand new task type (e.g. "Survey"):</div>
+    <div class="code-block">TaskType | TypeLabel   | SubtaskID    | SubtaskLabel         | CollectionType | IsRequired | ImageRequired | Options
+Survey   | Site Survey | location_ok  | Location Verified    | yesno          | TRUE        | FALSE         |
+Survey   | Site Survey | roof_area    | Roof Area (sqm)      | number         | TRUE        | FALSE         |
+Survey   | Site Survey | roof_cond    | Roof Condition       | select         | TRUE        | FALSE         | Good|Fair|Poor
+Survey   | Site Survey | shadow_free  | Shadow-free Zone     | yesno          | TRUE        | TRUE          |
+Survey   | Site Survey | survey_photo | Site Photo           | image_only     | TRUE        | TRUE          |</div>
+    <div class="step-desc" style="margin-top:10px">After editing the sheet, go to <strong>Task Master tab</strong> in the app and tap <strong>↻ Reload</strong>. The new task type and subtasks will immediately appear in the Create Task dropdown.</div>
+  </div>`;
+}
+
+// ─── UTILS ──────────────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function showToast(msg, type='ok') {
+  const t=document.getElementById('toast');
+  t.textContent=(type==='ok'?'✓  ':'✕  ')+msg;
+  t.className=`toast ${type} show`;
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+document.querySelectorAll('.modal-overlay').forEach(overlay=>{
+  overlay.addEventListener('click',e=>{ if(e.target===overlay) overlay.classList.remove('open'); });
+});
+
+// Generate manifest for PWA install
+function generateManifest() {
+  const m={name:'FieldOps — Rite Solar',short_name:'FieldOps',start_url:'.',display:'standalone',background_color:'#003A5C',theme_color:'#003A5C',description:'Field Operations Management for Rite Solar',icons:[{src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="24" fill="%23003A5C"/><text y="128" font-size="120" text-anchor="middle" x="96">☀️</text></svg>',sizes:'192x192',type:'image/svg+xml'}]};
+  const blob=new Blob([JSON.stringify(m)],{type:'application/json'});
+  document.getElementById('manifestLink').href=URL.createObjectURL(blob);
+}
+generateManifest();
+populateDemoUsers();
+</script>
+</body>
+</html>
