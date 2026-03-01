@@ -512,8 +512,14 @@ const CONFIG = {
   fcmServerKey: '',       // Your FCM Server Key (Legacy) or use Firebase Admin SDK
   fcmEnabled: false,
 
+  // Step 4: Google Drive photo storage
+  // Photos are uploaded via Apps Script — no extra key needed here.
+  // Just make sure your Apps Script has the UPLOAD_PHOTO action (see Setup tab).
+  // The Drive folder ID is set inside the Apps Script code.
+  driveEnabled: true,
+
   // App version
-  version: '3.0.0'
+  version: '3.1.0'
 };
 
 // ─── MASTER TASK/SUBTASK DATA ───────────────────────────────────
@@ -974,7 +980,7 @@ function onStatusChange() {
   document.getElementById('blockedWrap').style.display = document.getElementById('ut_status').value==='Blocked'?'':'none';
 }
 
-function submitUpdate() {
+async function submitUpdate() {
   const task = tasks.find(t=>t.id===currentTaskId);
   if (!task) return;
   const status = document.getElementById('ut_status').value;
@@ -994,39 +1000,94 @@ function submitUpdate() {
   if (status==='Completed' && mainPhotoData.length===0 && task.mainPhotos.length===0) { showToast('Please upload a completion photo','err'); return; }
   if (status==='Blocked' && !document.getElementById('ut_blocked').value.trim()) { showToast('Describe what is blocking this','err'); return; }
 
-  // Merge answers
+  // Merge text/select answers from UI into task
   if (typeInfo) {
     typeInfo.subtasks.forEach(s => {
-      if (tempSubtaskAnswers[s.id]) {
-        task.subtaskAnswers[s.id] = tempSubtaskAnswers[s.id];
-      }
-      // Also collect text inputs
+      if (tempSubtaskAnswers[s.id]) task.subtaskAnswers[s.id] = tempSubtaskAnswers[s.id];
       const txtEl = document.getElementById('sttxt_'+s.id);
       if (txtEl && txtEl.value) task.subtaskAnswers[s.id] = { val:txtEl.value, type:s.type };
-      if (subtaskPhotoData[s.id]) {
-        if (!task.subtaskImages) task.subtaskImages={};
-        task.subtaskImages[s.id] = subtaskPhotoData[s.id];
-      }
     });
   }
 
-  task.status=status;
-  if (mainPhotoData.length) task.mainPhotos=mainPhotoData;
-  task.location=capturedLocation;
-  task.submittedBy=currentUser.email;
-  task.submittedAt=new Date().toISOString();
-  if (status==='Blocked') task.blockedReason=document.getElementById('ut_blocked').value;
+  task.status = status;
+  task.location = capturedLocation;
+  task.submittedBy = currentUser.email;
+  task.submittedAt = new Date().toISOString();
+  if (status==='Blocked') task.blockedReason = document.getElementById('ut_blocked').value;
 
-  sheetsPost('UPDATE_TASK',{task});
+  // ── Upload photos to Google Drive ──────────────────────────────
+  showToast('Uploading photos to Drive…', 'ok');
+
+  // Subtask photos: upload each subtask's photos, get back Drive URLs
+  const subtaskPhotoUrls = {};  // { subtaskId: ['https://drive.google.com/...', ...] }
+  if (typeInfo) {
+    for (const s of typeInfo.subtasks) {
+      const newPhotos = subtaskPhotoData[s.id] || [];
+      const existingUrls = task.subtaskImages?.[s.id] || [];
+      if (newPhotos.length) {
+        const urls = await uploadPhotoBatch(newPhotos, task.taskNum, s.label);
+        subtaskPhotoUrls[s.id] = [...existingUrls, ...urls.filter(Boolean)];
+      } else {
+        subtaskPhotoUrls[s.id] = existingUrls;
+      }
+      if (!task.subtaskImages) task.subtaskImages = {};
+      task.subtaskImages[s.id] = subtaskPhotoUrls[s.id];
+    }
+  }
+
+  // Main completion photos
+  let mainPhotoUrls = task.mainPhotos || [];
+  if (mainPhotoData.length) {
+    const uploaded = await uploadPhotoBatch(mainPhotoData, task.taskNum, 'completion');
+    mainPhotoUrls = [...mainPhotoUrls, ...uploaded.filter(Boolean)];
+  }
+  task.mainPhotos = mainPhotoUrls;
+
+  // ── Build flat subtask payload for TaskUpdates sheet ────────────
+  // Each subtask gets: subtaskId_answer (text) and subtaskId_photos (Drive URLs)
+  const flatSubtasks = {};
+  if (typeInfo) {
+    typeInfo.subtasks.forEach(s => {
+      const ans = task.subtaskAnswers[s.id] || {};
+      flatSubtasks[s.id + '_answer'] = ans.val || '';
+      flatSubtasks[s.id + '_photos'] = (subtaskPhotoUrls[s.id] || []).join(' | ');
+    });
+  }
+
+  // ── Write to Sheets ─────────────────────────────────────────────
+  // 1. UPDATE_TASK — updates status/location/submittedBy/submittedAt in Tasks tab
+  sheetsPost('UPDATE_TASK', { task });
+
+  // 2. SAVE_UPDATE — appends one clean readable row to TaskUpdates tab
+  //    Each subtask gets its own Answer and Photo URL column. Sheet is auto-created.
+  sheetsPost('SAVE_UPDATE', {
+    update: {
+      timestamp:     task.submittedAt,
+      taskId:        task.id,
+      taskNum:       task.taskNum,
+      title:         task.title,
+      type:          task.type,
+      ssCode:        task.ssCode || '',
+      assignedTo:    task.assignedTo,
+      submittedBy:   task.submittedBy,
+      status:        status,
+      location:      task.location || '',
+      blockedReason: task.blockedReason || '',
+      mainPhotos:    mainPhotoUrls.join(' | '),
+      flatSubtasks   // { installation_answer: 'Yes', installation_photos: 'https://...', ... }
+    },
+    taskMasterSubtasks: typeInfo ? typeInfo.subtasks.map(s => ({ id: s.id, label: s.label })) : []
+  });
+
   sheetsLog(currentUser.email,'UPDATE_TASK',`${task.taskNum} → ${status}${capturedLocation?` @ ${capturedLocation}`:''}`);
 
-  // Notify admin of status change
+  // Notify admins
   const admins = users.filter(u=>u.role==='Admin');
   admins.forEach(a => sendPushNotification(a.email, `📋 Task ${task.taskNum} updated`, `${currentUser.name} marked it ${status}`, task.id));
 
   closeModal('mUpdateTask');
   renderDashboard(); renderTasks();
-  showToast(`${task.taskNum} updated to ${status} ✓`,'ok');
+  showToast(`${task.taskNum} updated to ${status} ✓`, 'ok');
 }
 
 // ─── TASK DETAIL (admin) ────────────────────────────────────────
@@ -1227,6 +1288,44 @@ function renderNotifBanner() {
   </div>`;
 }
 
+// ─── GOOGLE DRIVE PHOTO UPLOAD ─────────────────────────────────
+// Uploads a single base64 image to Google Drive via Apps Script.
+// Apps Script saves it to the FieldOps Photos folder and returns a
+// public share URL. Falls back gracefully if upload fails.
+async function uploadToDrive(base64DataUrl, filename) {
+  if (!CONFIG.sheetsEnabled || !CONFIG.sheetsUrl) return null;
+  try {
+    // We need to READ the response, so we use a plain fetch (not no-cors).
+    // Apps Script doPost returns CORS headers when we set them explicitly.
+    const res = await fetch(CONFIG.sheetsUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'UPLOAD_PHOTO',
+        filename: filename || ('photo_' + Date.now() + '.jpg'),
+        base64: base64DataUrl  // full data URL, Apps Script strips the prefix
+      })
+    });
+    const json = await res.json();
+    if (json.ok && json.url) return json.url;
+    console.warn('Drive upload failed:', json);
+    return null;
+  } catch(e) {
+    console.warn('Drive upload error:', e);
+    return null;
+  }
+}
+
+// Upload a batch of base64 photos. Returns array of Drive URLs (nulls on failure).
+async function uploadPhotoBatch(base64Array, taskNum, subtaskLabel) {
+  if (!base64Array || !base64Array.length) return [];
+  return Promise.all(base64Array.map((b, i) => {
+    const ts = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+    const fname = `${taskNum}_${(subtaskLabel||'photo').replace(/\s+/g,'_')}_${i+1}_${ts}.jpg`;
+    return uploadToDrive(b, fname);
+  }));
+}
+
 // ─── GOOGLE SHEETS INTEGRATION ──────────────────────────────────
 async function sheetsPost(action, payload={}) {
   if (!CONFIG.sheetsEnabled || !CONFIG.sheetsUrl) return;
@@ -1296,71 +1395,203 @@ Solar  | Solar Feeder     | panel_cond   | Panel Condition      | select| TRUE |
       <div class="step-desc">In your Sheet go to <strong>Extensions → Apps Script</strong>. Delete existing code and paste:</div>
       <div class="code-block">const SS = SpreadsheetApp.getActiveSpreadsheet();
 
-function doPost(e) {
-  const d = JSON.parse(e.postData.contents);
-  const action = d.action;
+// ─── CONFIG: Set your Google Drive folder ID here ───────────────
+// 1. Go to drive.google.com → create a folder called "FieldOps Photos"
+// 2. Open the folder → copy the ID from the URL:
+//    drive.google.com/drive/folders/THIS_PART_IS_THE_ID
+// 3. Paste it below:
+const DRIVE_FOLDER_ID = 'YOUR_DRIVE_FOLDER_ID_HERE';
 
-  if (action === 'CREATE_TASK') {
-    const sh = SS.getSheetByName('Tasks');
-    const t = d.task;
-    sh.appendRow([t.id,t.taskNum,t.title,t.type,t.description,
-      t.assignedTo,t.startDate,t.dueDate,t.status,t.ssCode||'',
-      t.createdBy,t.createdAt,'','','','','']);
+// ─── Helper: ensure TaskUpdates sheet exists with correct columns ─
+function ensureTaskUpdatesSheet(subtaskDefs) {
+  const fixed = [
+    'Timestamp','TaskID','TaskNum','Title','Type','SSCode',
+    'AssignedTo','SubmittedBy','Status','Location','BlockedReason','MainPhotos'
+  ];
+  let sh = SS.getSheetByName('TaskUpdates');
+  if (!sh) {
+    sh = SS.insertSheet('TaskUpdates');
+    const allH = fixed.slice();
+    subtaskDefs.forEach(s => { allH.push(s.label+' (Answer)'); allH.push(s.label+' (Photos)'); });
+    sh.appendRow(allH);
+    const hRange = sh.getRange(1,1,1,allH.length);
+    hRange.setFontWeight('bold').setBackground('#003A5C').setFontColor('#ffffff');
+    sh.setFrozenRows(1);
+    sh.setColumnWidths(1, allH.length, 160);
+    return sh;
   }
+  // Add any missing subtask columns
+  const existingH = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
+  subtaskDefs.forEach(s => {
+    ['(Answer)','(Photos)'].forEach(suffix => {
+      const h = s.label+' '+suffix;
+      if (!existingH.includes(h)) {
+        const c = sh.getLastColumn()+1;
+        sh.getRange(1,c).setValue(h)
+          .setFontWeight('bold').setBackground('#003A5C').setFontColor('#ffffff');
+        sh.setColumnWidth(c, 160);
+      }
+    });
+  });
+  return sh;
+}
 
-  if (action === 'UPDATE_TASK') {
-    const sh = SS.getSheetByName('Tasks');
-    const rows = sh.getDataRange().getValues();
-    for (let i=1;i&lt;rows.length;i++) {
-      if (rows[i][0]===d.task.id) {
-        const r = i+1;
-        sh.getRange(r,9).setValue(d.task.status);
-        sh.getRange(r,13).setValue(d.task.location||'');
-        sh.getRange(r,14).setValue(d.task.submittedBy||'');
-        sh.getRange(r,15).setValue(d.task.submittedAt||'');
-        sh.getRange(r,16).setValue(JSON.stringify(d.task.subtaskAnswers||{}));
-        sh.getRange(r,17).setValue(d.task.blockedReason||'');
-        break;
+function doPost(e) {
+  try {
+    const d = JSON.parse(e.postData.contents);
+    const action = d.action;
+
+    // ── UPLOAD_PHOTO: save base64 image to Google Drive, return public URL ──
+    if (action === 'UPLOAD_PHOTO') {
+      const folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+      // Strip the data:image/...;base64, prefix
+      const base64 = d.base64.indexOf(',') !== -1 ? d.base64.split(',')[1] : d.base64;
+      const mimeType = (d.base64.indexOf('png') !== -1) ? 'image/png' : 'image/jpeg';
+      const bytes = Utilities.base64Decode(base64);
+      const blob = Utilities.newBlob(bytes, mimeType, d.filename || ('photo_'+Date.now()+'.jpg'));
+      const file = folder.createFile(blob);
+      // Make file publicly viewable (anyone with the link)
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      // Return a direct-view URL
+      const url = 'https://drive.google.com/file/d/' + file.getId() + '/view';
+      const corsHeaders = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST',
+        'Content-Type': 'application/json'
+      };
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, url: url, fileId: file.getId() }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ── CREATE_TASK ──────────────────────────────────────────────
+    if (action === 'CREATE_TASK') {
+      const sh = SS.getSheetByName('Tasks');
+      const t = d.task;
+      sh.appendRow([t.id,t.taskNum,t.title,t.type,t.description||'',
+        t.assignedTo,t.startDate,t.dueDate,t.status,t.ssCode||'',
+        t.createdBy,t.createdAt,'','','','','']);
+    }
+
+    // ── UPDATE_TASK: update status row in Tasks tab ───────────────
+    if (action === 'UPDATE_TASK') {
+      const sh = SS.getSheetByName('Tasks');
+      const rows = sh.getDataRange().getValues();
+      for (let i=1;i&lt;rows.length;i++) {
+        if (rows[i][0]===d.task.id) {
+          const r=i+1;
+          sh.getRange(r,9).setValue(d.task.status);
+          sh.getRange(r,13).setValue(d.task.location||'');
+          sh.getRange(r,14).setValue(d.task.submittedBy||'');
+          sh.getRange(r,15).setValue(d.task.submittedAt||'');
+          sh.getRange(r,16).setValue(JSON.stringify(d.task.subtaskAnswers||{}));
+          sh.getRange(r,17).setValue(d.task.blockedReason||'');
+          break;
+        }
       }
     }
-  }
 
-  if (action === 'ADD_USER') {
-    const sh = SS.getSheetByName('Users');
-    const u = d.user;
-    sh.appendRow([u.email,u.name,u.role,u.fcmToken||'',new Date().toISOString()]);
-  }
+    // ── SAVE_UPDATE: append clean readable row to TaskUpdates ─────
+    // One column per subtask answer + one column per subtask's photo URLs.
+    // Sheet is auto-created on first call. New subtask columns are added automatically.
+    if (action === 'SAVE_UPDATE') {
+      const u = d.update;
+      const subtaskDefs = d.taskMasterSubtasks || [];
+      const sh = ensureTaskUpdatesSheet(subtaskDefs);
+      const headerRow = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
 
-  if (action === 'UPDATE_USER_FCM') {
-    const sh = SS.getSheetByName('Users');
-    const rows = sh.getDataRange().getValues();
-    for (let i=1;i&lt;rows.length;i++) {
-      if (rows[i][0]===d.email) { sh.getRange(i+1,4).setValue(d.fcmToken); break; }
+      const row = new Array(headerRow.length).fill('');
+      row[0]  = u.timestamp;
+      row[1]  = u.taskId;
+      row[2]  = u.taskNum;
+      row[3]  = u.title;
+      row[4]  = u.type;
+      row[5]  = u.ssCode||'';
+      row[6]  = u.assignedTo;
+      row[7]  = u.submittedBy;
+      row[8]  = u.status;
+      row[9]  = u.location||'';
+      row[10] = u.blockedReason||'';
+      row[11] = u.mainPhotos||'';
+
+      const flat = u.flatSubtasks || {};
+      subtaskDefs.forEach(s => {
+        const ai = headerRow.indexOf(s.label+' (Answer)');
+        const pi = headerRow.indexOf(s.label+' (Photos)');
+        if (ai !== -1) row[ai] = flat[s.id+'_answer']  || '';
+        if (pi !== -1) row[pi] = flat[s.id+'_photos']  || '';
+      });
+
+      sh.appendRow(row);
+
+      // Make Drive photo links clickable in the sheet
+      const lastRow = sh.getLastRow();
+      headerRow.forEach((h, ci) => {
+        if (String(h).endsWith('(Photos)') || h === 'MainPhotos') {
+          const val = String(row[ci] || '');
+          const urls = val.split(' | ').map(u => u.trim()).filter(u => u.startsWith('http'));
+          if (urls.length === 1) {
+            sh.getRange(lastRow, ci+1).setFormula('=HYPERLINK("'+urls[0]+'","📷 View")');
+          } else if (urls.length > 1) {
+            // Multiple photos: show count as hyperlink to first
+            sh.getRange(lastRow, ci+1).setFormula('=HYPERLINK("'+urls[0]+'","📷 '+urls.length+' photos")');
+          }
+        }
+      });
     }
-  }
 
-  if (action === 'LOG') {
-    const sh = SS.getSheetByName('Log');
-    const l = d.log;
-    sh.appendRow([l.timestamp,l.user,l.action,l.detail]);
-  }
+    // ── ADD_USER ─────────────────────────────────────────────────
+    if (action === 'ADD_USER') {
+      const sh = SS.getSheetByName('Users');
+      const u = d.user;
+      sh.appendRow([u.email,u.name,u.role,u.fcmToken||'',new Date().toISOString()]);
+    }
 
-  if (action === 'SEND_PUSH') {
-    // Call FCM via UrlFetchApp
-    const payload = { to: d.to, notification: d.notification, data: d.data };
-    UrlFetchApp.fetch('https://fcm.googleapis.com/fcm/send', {
-      method:'post', contentType:'application/json',
-      headers:{ Authorization:'key=YOUR_FCM_SERVER_KEY_HERE' },
-      payload:JSON.stringify(payload), muteHttpExceptions:true
-    });
-  }
+    // ── UPDATE_USER_FCM ──────────────────────────────────────────
+    if (action === 'UPDATE_USER_FCM') {
+      const sh = SS.getSheetByName('Users');
+      const rows = sh.getDataRange().getValues();
+      for (let i=1;i&lt;rows.length;i++) {
+        if (rows[i][0]===d.email) { sh.getRange(i+1,4).setValue(d.fcmToken); break; }
+      }
+    }
 
-  return ContentService.createTextOutput(JSON.stringify({ok:true}))
-    .setMimeType(ContentService.MimeType.JSON);
+    // ── LOG ──────────────────────────────────────────────────────
+    if (action === 'LOG') {
+      const sh = SS.getSheetByName('Log');
+      sh.appendRow([d.log.timestamp,d.log.user,d.log.action,d.log.detail]);
+    }
+
+    // ── SEND_PUSH ────────────────────────────────────────────────
+    if (action === 'SEND_PUSH') {
+      const payload = { to:d.to, notification:d.notification, data:d.data };
+      UrlFetchApp.fetch('https://fcm.googleapis.com/fcm/send', {
+        method:'post', contentType:'application/json',
+        headers:{ Authorization:'key=YOUR_FCM_SERVER_KEY_HERE' },
+        payload:JSON.stringify(payload), muteHttpExceptions:true
+      });
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ok:true}))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch(err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ok:false, error:err.message}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// doOptions handles CORS preflight — required so the browser can read
+// the UPLOAD_PHOTO response (Drive URL) from a cross-origin page.
+function doOptions(e) {
+  return ContentService.createTextOutput('')
+    .setMimeType(ContentService.MimeType.TEXT);
 }
 
 function doGet(e) {
-  const action = e.parameter.action || 'GET_ALL';
+  const action = (e.parameter && e.parameter.action) ? e.parameter.action : 'GET_ALL';
 
   if (action === 'GET_ALL') {
     const tasks = SS.getSheetByName('Tasks').getDataRange().getValues();
@@ -1387,6 +1618,9 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify({taskMaster:master}))
       .setMimeType(ContentService.MimeType.JSON);
   }
+
+  return ContentService.createTextOutput(JSON.stringify({ok:true}))
+    .setMimeType(ContentService.MimeType.JSON);
 }</div>
     </div></div>
 
@@ -1400,6 +1634,48 @@ function doGet(e) {
       <div class="step-desc">Open this HTML file in a text editor. Find the CONFIG block at the top of the script and update:</div>
       <div class="code-block">sheetsUrl: 'https://script.google.com/macros/s/YOUR_ID/exec',
 sheetsEnabled: true,</div>
+    </div></div>
+  </div>
+
+  <div class="setup-card">
+    <h3>📁 Part 1B — Google Drive Photo Storage</h3>
+    <div class="info-box">Every photo taken by field team is automatically saved to a Google Drive folder you control. The photo's Drive link is recorded in the <strong>TaskUpdates</strong> sheet as a clickable link. No extra accounts or API keys needed — it uses the same Google account as your Sheets.</div>
+
+    <div class="setup-step"><div class="step-num">1</div><div class="step-body">
+      <div class="step-title">Create a folder in your Google Drive</div>
+      <div class="step-desc">Go to <a href="https://drive.google.com" target="_blank" style="color:var(--blue)">drive.google.com</a> → click <strong>New → Folder</strong> → name it <strong>FieldOps Photos</strong>.</div>
+    </div></div>
+
+    <div class="setup-step"><div class="step-num">2</div><div class="step-body">
+      <div class="step-title">Copy the folder ID from the URL</div>
+      <div class="step-desc">Open the folder. Look at your browser address bar — the URL looks like:<br><br>
+      <code>https://drive.google.com/drive/folders/<strong>1ABCdef_GHIjklMNOpqrSTUvwxYZ12345</strong></code><br><br>
+      The long string of letters and numbers at the end is your <strong>Folder ID</strong>. Copy it.</div>
+    </div></div>
+
+    <div class="setup-step"><div class="step-num">3</div><div class="step-body">
+      <div class="step-title">Paste the folder ID into the Apps Script</div>
+      <div class="step-desc">In your Apps Script editor, find this line near the top:</div>
+      <div class="code-block">const DRIVE_FOLDER_ID = 'YOUR_DRIVE_FOLDER_ID_HERE';</div>
+      <div class="step-desc" style="margin-top:6px">Replace <strong>YOUR_DRIVE_FOLDER_ID_HERE</strong> with the ID you copied. Then save and re-deploy the script (Deploy → Manage deployments → Edit → New version → Deploy).</div>
+    </div></div>
+
+    <div class="setup-step"><div class="step-num">4</div><div class="step-body">
+      <div class="step-title">How it works after setup</div>
+      <div class="step-desc">
+        • When field staff tap submit, each photo is uploaded to your <strong>FieldOps Photos</strong> Drive folder automatically<br>
+        • The file is named: <code>SS:10_Installation_Complete_1_2026-03-01.jpg</code><br>
+        • The Drive share link is recorded in the <strong>TaskUpdates</strong> sheet as a clickable <strong>📷 View</strong> link<br>
+        • All photos stay in your Drive — you own and control them<br>
+        • The <strong>TaskUpdates</strong> sheet is created automatically the first time a task is submitted
+      </div>
+    </div></div>
+
+    <div class="setup-step"><div class="step-num">5</div><div class="step-body">
+      <div class="step-title">What the TaskUpdates sheet looks like</div>
+      <div class="step-desc">Every submission creates a new row with individual columns for every subtask. Example for a Solar task:<br><br>
+      <strong>Timestamp | TaskNum | Type | Status | Panels Installed (Answer) | Panels Installed (Photos) | Inverter Connected (Answer) | ...</strong><br><br>
+      Each photo column shows <strong>📷 View</strong> — click it to open the photo directly from Drive.</div>
     </div></div>
   </div>
 
