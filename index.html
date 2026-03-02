@@ -1321,27 +1321,51 @@ function renderNotifBanner() {
 }
 
 // ─── GOOGLE DRIVE PHOTO UPLOAD ─────────────────────────────────
-// Uploads a single base64 photo to Google Drive via the Apps Script
-// UPLOAD_PHOTO action. Returns the public Drive URL string, or null.
+// Google Apps Script doPost does not return CORS headers, so the browser
+// cannot read a direct response from a cross-origin POST. We work around
+// this using a two-step pattern:
 //
-// KEY POINT: We do NOT use mode:'no-cors' here — we need to read the
-// response to get the Drive URL. Apps Script web apps deployed as
-// "Anyone" support cross-origin reads on POST requests.
+//  1. POST the photo (mode:'no-cors', fire-and-forget). Apps Script saves
+//     the file to Drive AND writes the resulting URL into a PhotoQueue
+//     sheet row, keyed by a unique uploadId we generate here.
+//
+//  2. Poll GET ?action=GET_PHOTO_URL&id=uploadId (CORS works on doGet).
+//     Once Apps Script has finished writing, the URL comes back and we
+//     store it in the TaskUpdates row.
+//
+// This is the only reliable approach within Apps Script's CORS constraints.
+
 async function uploadToDrive(base64DataUrl, filename) {
   if (!CONFIG.sheetsEnabled || !CONFIG.sheetsUrl) return null;
   try {
-    const res = await fetch(CONFIG.sheetsUrl, {
+    // Generate a unique ID for this upload so we can retrieve the URL
+    const uploadId = 'ph_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+
+    // Step 1: POST photo — no-cors, we cannot read this response
+    await fetch(CONFIG.sheetsUrl, {
       method:  'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      mode:    'no-cors',
+      headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({
         action:   'UPLOAD_PHOTO',
+        uploadId: uploadId,
         filename: filename,
-        base64:   base64DataUrl   // full data URL — Apps Script strips the prefix
+        base64:   base64DataUrl
       })
     });
-    const json = await res.json();
-    if (json.ok && json.url) return json.url;
-    console.warn('Drive upload failed:', json);
+
+    // Step 2: Poll GET endpoint until Apps Script has written the URL
+    // (usually completes in 2–5 seconds; we allow up to 30 s)
+    const pollUrl = CONFIG.sheetsUrl + '?action=GET_PHOTO_URL&id=' + uploadId;
+    for (let attempt = 0; attempt < 12; attempt++) {
+      await new Promise(r => setTimeout(r, 2500)); // wait 2.5 s between polls
+      try {
+        const res  = await fetch(pollUrl);
+        const json = await res.json();
+        if (json.ok && json.url) return json.url;
+      } catch(e) { /* not ready yet, keep polling */ }
+    }
+    console.warn('Drive upload timed out for', filename);
     return null;
   } catch(e) {
     console.warn('Drive upload error:', e);
@@ -1460,10 +1484,10 @@ Solar  | Solar Feeder     | panel_cond   | Panel Condition      | select| TRUE |
       <div class="step-desc">In your Sheet go to <strong>Extensions → Apps Script</strong>. Delete existing code and paste:</div>
       <div class="code-block">const SS = SpreadsheetApp.getActiveSpreadsheet();
 
-// ─── CONFIGURE YOUR DRIVE FOLDER ─────────────────────────────
-// 1. In Google Drive, create a folder called "FieldOps Photos"
-// 2. Open it — the URL ends with /folders/XXXXXXXXXXXXXXXX
-// 3. Copy that ID and paste it below:
+// ─── YOUR DRIVE FOLDER ID ────────────────────────────────────
+// Create a folder in Google Drive called "FieldOps Photos",
+// open it, and copy the ID from the URL bar:
+//   https://drive.google.com/drive/folders/PASTE_THIS_PART
 const DRIVE_FOLDER_ID = 'YOUR_DRIVE_FOLDER_ID_HERE';
 
 // ─── Helper: ensure TaskUpdates sheet with correct columns ────
@@ -1474,7 +1498,10 @@ function ensureTaskUpdatesSheet(subtaskDefs) {
   if (!sh) {
     sh = SS.insertSheet('TaskUpdates');
     const allH = fixed.slice();
-    subtaskDefs.forEach(s => { allH.push(s.label+' (Answer)'); allH.push(s.label+' (Photos)'); });
+    subtaskDefs.forEach(s => {
+      allH.push(s.label + ' (Answer)');
+      allH.push(s.label + ' (Photos)');
+    });
     sh.appendRow(allH);
     sh.getRange(1,1,1,allH.length)
       .setFontWeight('bold').setBackground('#003A5C').setFontColor('#ffffff');
@@ -1482,19 +1509,34 @@ function ensureTaskUpdatesSheet(subtaskDefs) {
     sh.setColumnWidths(1, allH.length, 150);
     return sh;
   }
-  // Add missing columns for any new subtasks
+  // Add missing columns for new subtasks added to TaskMaster later
   const existingH = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
   subtaskDefs.forEach(s => {
-    [' (Answer)',' (Photos)'].forEach(sfx => {
+    [' (Answer)', ' (Photos)'].forEach(sfx => {
       const h = s.label + sfx;
       if (!existingH.includes(h)) {
         const c = sh.getLastColumn() + 1;
-        sh.getRange(1,c).setValue(h)
+        sh.getRange(1, c).setValue(h)
           .setFontWeight('bold').setBackground('#003A5C').setFontColor('#ffffff');
         sh.setColumnWidth(c, 150);
       }
     });
   });
+  return sh;
+}
+
+// ─── Helper: get or create PhotoQueue sheet ───────────────────
+// PhotoQueue is a scratch sheet: uploadId → Drive URL.
+// The app posts a photo (fire-and-forget), then polls GET_PHOTO_URL
+// until this sheet has the URL. Rows older than 24 h are auto-cleaned.
+function getPhotoQueueSheet() {
+  let sh = SS.getSheetByName('PhotoQueue');
+  if (!sh) {
+    sh = SS.insertSheet('PhotoQueue');
+    sh.appendRow(['uploadId', 'url', 'createdAt']);
+    sh.getRange(1,1,1,3).setFontWeight('bold');
+    sh.hideSheet(); // keep it tidy — users don't need to see this
+  }
   return sh;
 }
 
@@ -1504,20 +1546,26 @@ function doPost(e) {
     const action = d.action;
 
     // ── UPLOAD_PHOTO ─────────────────────────────────────────
-    // Saves a base64 image into the FieldOps Photos Drive folder.
-    // Returns a public shareable URL the app stores in Sheets.
+    // 1. Decode base64 → save to Drive folder
+    // 2. Write { uploadId, url } into PhotoQueue so the app can
+    //    retrieve it via GET_PHOTO_URL polling.
     if (action === 'UPLOAD_PHOTO') {
-      const dataUrl = d.base64 || '';
-      const base64  = dataUrl.indexOf(',') !== -1 ? dataUrl.split(',')[1] : dataUrl;
-      const mime    = dataUrl.indexOf('image/png') !== -1 ? 'image/png' : 'image/jpeg';
-      const bytes   = Utilities.base64Decode(base64);
-      const blob    = Utilities.newBlob(bytes, mime, d.filename || ('photo_'+Date.now()+'.jpg'));
-      const folder  = DriveApp.getFolderById(DRIVE_FOLDER_ID);
-      const file    = folder.createFile(blob);
+      const dataUrl  = d.base64 || '';
+      const base64   = dataUrl.indexOf(',') !== -1 ? dataUrl.split(',')[1] : dataUrl;
+      const mime     = dataUrl.indexOf('image/png') !== -1 ? 'image/png' : 'image/jpeg';
+      const bytes    = Utilities.base64Decode(base64);
+      const blob     = Utilities.newBlob(bytes, mime, d.filename || ('photo_' + Date.now() + '.jpg'));
+      const folder   = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+      const file     = folder.createFile(blob);
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       const url = 'https://drive.google.com/file/d/' + file.getId() + '/view';
+
+      // Write to PhotoQueue so the polling GET can retrieve the URL
+      const qsh = getPhotoQueueSheet();
+      qsh.appendRow([d.uploadId, url, new Date().toISOString()]);
+
       return ContentService
-        .createTextOutput(JSON.stringify({ ok:true, url:url }))
+        .createTextOutput(JSON.stringify({ ok: true }))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -1534,121 +1582,163 @@ function doPost(e) {
     if (action === 'UPDATE_TASK') {
       const sh   = SS.getSheetByName('Tasks');
       const rows = sh.getDataRange().getValues();
-      for (let i=1;i&lt;rows.length;i++) {
-        if (rows[i][0]===d.task.id) {
-          const r=i+1;
-          sh.getRange(r,9).setValue(d.task.status);
-          sh.getRange(r,13).setValue(d.task.location||'');
-          sh.getRange(r,14).setValue(d.task.submittedBy||'');
-          sh.getRange(r,15).setValue(d.task.submittedAt||'');
-          sh.getRange(r,16).setValue(JSON.stringify(d.task.subtaskAnswers||{}));
-          sh.getRange(r,17).setValue(d.task.blockedReason||'');
+      for (let i = 1; i &lt; rows.length; i++) {
+        if (rows[i][0] === d.task.id) {
+          const r = i + 1;
+          sh.getRange(r, 9).setValue(d.task.status);
+          sh.getRange(r, 13).setValue(d.task.location || '');
+          sh.getRange(r, 14).setValue(d.task.submittedBy || '');
+          sh.getRange(r, 15).setValue(d.task.submittedAt || '');
+          sh.getRange(r, 16).setValue(JSON.stringify(d.task.subtaskAnswers || {}));
+          sh.getRange(r, 17).setValue(d.task.blockedReason || '');
           break;
         }
       }
     }
 
     // ── SAVE_UPDATE ──────────────────────────────────────────
-    // One clean row per field submission. Each subtask gets its
-    // own Answer column and Photos column (clickable Drive links).
+    // Appends one clean row to TaskUpdates with individual columns
+    // per subtask. Photo columns contain clickable Drive links.
     if (action === 'SAVE_UPDATE') {
       const u           = d.update;
       const subtaskDefs = d.taskMasterSubtasks || [];
       const sh          = ensureTaskUpdatesSheet(subtaskDefs);
-      const headerRow   = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
+      const headerRow   = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
       const row         = new Array(headerRow.length).fill('');
-      row[0]=u.timestamp; row[1]=u.taskId;   row[2]=u.taskNum;
-      row[3]=u.title;     row[4]=u.type;     row[5]=u.ssCode||'';
-      row[6]=u.assignedTo; row[7]=u.submittedBy; row[8]=u.status;
-      row[9]=u.location||''; row[10]=u.blockedReason||''; row[11]=u.mainPhotos||'';
+
+      row[0]  = u.timestamp;     row[1]  = u.taskId;
+      row[2]  = u.taskNum;       row[3]  = u.title;
+      row[4]  = u.type;          row[5]  = u.ssCode || '';
+      row[6]  = u.assignedTo;    row[7]  = u.submittedBy;
+      row[8]  = u.status;        row[9]  = u.location || '';
+      row[10] = u.blockedReason || '';
+      row[11] = u.mainPhotos || '';
+
       const flat = u.flatSubtasks || {};
       subtaskDefs.forEach(s => {
-        const ai = headerRow.indexOf(s.label+' (Answer)');
-        const pi = headerRow.indexOf(s.label+' (Photos)');
-        if (ai!==-1) row[ai] = flat[s.id+'_answer'] || '';
-        if (pi!==-1) row[pi] = flat[s.id+'_photos'] || '';
+        const ai = headerRow.indexOf(s.label + ' (Answer)');
+        const pi = headerRow.indexOf(s.label + ' (Photos)');
+        if (ai !== -1) row[ai] = flat[s.id + '_answer'] || '';
+        if (pi !== -1) row[pi] = flat[s.id + '_photos'] || '';
       });
+
       sh.appendRow(row);
-      // Turn Drive URLs into clickable hyperlinks in the sheet
+
+      // Turn Drive URLs into clickable hyperlinks
       const lastRow = sh.getLastRow();
       headerRow.forEach((h, ci) => {
-        if (String(h).endsWith('(Photos)') || h==='MainPhotos') {
-          const val  = String(row[ci]||'');
-          const urls = val.split(' | ').map(u=>u.trim()).filter(u=>u.startsWith('http'));
-          if (urls.length===1)
-            sh.getRange(lastRow,ci+1).setFormula('=HYPERLINK("'+urls[0]+'","📷 View")');
-          else if (urls.length>1)
-            sh.getRange(lastRow,ci+1).setFormula('=HYPERLINK("'+urls[0]+'","📷 '+urls.length+' photos")');
+        if (String(h).endsWith('(Photos)') || h === 'MainPhotos') {
+          const val  = String(row[ci] || '');
+          const urls = val.split(' | ').map(u => u.trim()).filter(u => u.startsWith('http'));
+          if (urls.length === 1) {
+            sh.getRange(lastRow, ci + 1).setFormula('=HYPERLINK("' + urls[0] + '","📷 View")');
+          } else if (urls.length > 1) {
+            sh.getRange(lastRow, ci + 1).setFormula('=HYPERLINK("' + urls[0] + '","📷 ' + urls.length + ' photos")');
+          }
         }
       });
     }
 
     // ── ADD_USER ─────────────────────────────────────────────
     if (action === 'ADD_USER') {
-      const sh=SS.getSheetByName('Users'), u=d.user;
-      sh.appendRow([u.email,u.name,u.role,u.fcmToken||'',new Date().toISOString()]);
+      const sh = SS.getSheetByName('Users');
+      const u  = d.user;
+      sh.appendRow([u.email, u.name, u.role, u.fcmToken || '', new Date().toISOString()]);
     }
 
     // ── UPDATE_USER_FCM ──────────────────────────────────────
     if (action === 'UPDATE_USER_FCM') {
-      const sh=SS.getSheetByName('Users'), rows=sh.getDataRange().getValues();
-      for (let i=1;i&lt;rows.length;i++) {
-        if (rows[i][0]===d.email) { sh.getRange(i+1,4).setValue(d.fcmToken); break; }
+      const sh   = SS.getSheetByName('Users');
+      const rows = sh.getDataRange().getValues();
+      for (let i = 1; i &lt; rows.length; i++) {
+        if (rows[i][0] === d.email) { sh.getRange(i+1, 4).setValue(d.fcmToken); break; }
       }
     }
 
     // ── LOG ──────────────────────────────────────────────────
     if (action === 'LOG') {
-      SS.getSheetByName('Log').appendRow([d.log.timestamp,d.log.user,d.log.action,d.log.detail]);
+      SS.getSheetByName('Log')
+        .appendRow([d.log.timestamp, d.log.user, d.log.action, d.log.detail]);
     }
 
     // ── SEND_PUSH ────────────────────────────────────────────
     if (action === 'SEND_PUSH') {
       UrlFetchApp.fetch('https://fcm.googleapis.com/fcm/send', {
-        method:'post', contentType:'application/json',
-        headers:{ Authorization:'key=YOUR_FCM_SERVER_KEY_HERE' },
-        payload:JSON.stringify({to:d.to,notification:d.notification,data:d.data}),
-        muteHttpExceptions:true
+        method: 'post', contentType: 'application/json',
+        headers: { Authorization: 'key=YOUR_FCM_SERVER_KEY_HERE' },
+        payload: JSON.stringify({ to:d.to, notification:d.notification, data:d.data }),
+        muteHttpExceptions: true
       });
     }
 
     return ContentService
-      .createTextOutput(JSON.stringify({ok:true}))
+      .createTextOutput(JSON.stringify({ ok: true }))
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch(err) {
     return ContentService
-      .createTextOutput(JSON.stringify({ok:false,error:err.message}))
+      .createTextOutput(JSON.stringify({ ok: false, error: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
 function doGet(e) {
-  const action = (e.parameter&&e.parameter.action) ? e.parameter.action : 'GET_ALL';
-  if (action==='GET_ALL') {
+  const action = (e.parameter && e.parameter.action) ? e.parameter.action : 'GET_ALL';
+
+  // ── GET_PHOTO_URL ─────────────────────────────────────────
+  // The app polls this after posting a photo. Returns the Drive URL
+  // once UPLOAD_PHOTO has finished writing it to PhotoQueue.
+  if (action === 'GET_PHOTO_URL') {
+    const id  = e.parameter.id || '';
+    const qsh = getPhotoQueueSheet();
+    if (qsh.getLastRow() < 2) {
+      return ContentService.createTextOutput(JSON.stringify({ ok: false, pending: true }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    const rows = qsh.getDataRange().getValues();
+    for (let i = 1; i &lt; rows.length; i++) {
+      if (String(rows[i][0]) === id) {
+        const url = String(rows[i][1]);
+        // Clean up this row now that it has been collected
+        qsh.deleteRow(i + 1);
+        return ContentService.createTextOutput(JSON.stringify({ ok: true, url: url }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    // Not written yet — tell the app to keep polling
+    return ContentService.createTextOutput(JSON.stringify({ ok: false, pending: true }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // ── GET_ALL ───────────────────────────────────────────────
+  if (action === 'GET_ALL') {
     const tasks = SS.getSheetByName('Tasks').getDataRange().getValues();
     const users = SS.getSheetByName('Users').getDataRange().getValues();
-    return ContentService.createTextOutput(JSON.stringify({tasks,users}))
+    return ContentService.createTextOutput(JSON.stringify({ tasks, users }))
       .setMimeType(ContentService.MimeType.JSON);
   }
-  if (action==='GET_MASTER') {
-    const rows=SS.getSheetByName('TaskMaster').getDataRange().getValues();
-    const master={}; let colorIdx=0;
-    for (let i=1;i&lt;rows.length;i++) {
-      const [type,typeLabel,id,label,colType,req,imgReq,options]=rows[i];
+
+  // ── GET_MASTER ────────────────────────────────────────────
+  if (action === 'GET_MASTER') {
+    const rows   = SS.getSheetByName('TaskMaster').getDataRange().getValues();
+    const master = {};
+    let colorIdx = 0;
+    for (let i = 1; i &lt; rows.length; i++) {
+      const [type,typeLabel,id,label,colType,req,imgReq,options] = rows[i];
       if (!type) continue;
-      if (!master[type]) master[type]={label:typeLabel,colorIdx:colorIdx++,subtasks:[]};
+      if (!master[type]) master[type] = { label:typeLabel, colorIdx:colorIdx++, subtasks:[] };
       master[type].subtasks.push({
-        id, label, type:colType,
-        required:req===true||String(req).toUpperCase()==='TRUE',
-        imageRequired:imgReq===true||String(imgReq).toUpperCase()==='TRUE',
-        options:options?String(options).split('|').map(o=>o.trim()).filter(Boolean):[]
+        id, label, type: colType,
+        required:      req === true || String(req).toUpperCase() === 'TRUE',
+        imageRequired: imgReq === true || String(imgReq).toUpperCase() === 'TRUE',
+        options:       options ? String(options).split('|').map(o => o.trim()).filter(Boolean) : []
       });
     }
-    return ContentService.createTextOutput(JSON.stringify({taskMaster:master}))
+    return ContentService.createTextOutput(JSON.stringify({ taskMaster: master }))
       .setMimeType(ContentService.MimeType.JSON);
   }
-  return ContentService.createTextOutput(JSON.stringify({ok:true}))
+
+  return ContentService.createTextOutput(JSON.stringify({ ok: true }))
     .setMimeType(ContentService.MimeType.JSON);
 }</div>
     </div></div>
